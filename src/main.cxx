@@ -2,6 +2,6 @@
 
 int main(int argc, char** argv)
 {
-    Cli::Menu* m_menu = new Cli::Menu();
+    CMD::Menu* m_menu = new CMD::Menu();
     return 0;
 }
