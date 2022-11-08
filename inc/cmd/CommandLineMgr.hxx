@@ -1,6 +1,11 @@
 #ifndef __CMD_COMMAND_LINE_MGR_HXX__
 #define __CMD_COMMAND_LINE_MGR_HXX__
 
+#include "cli/cli.h"
+#include "cli/filehistorystorage.h"
+#include "cli/clilocalsession.h"
+#include "cli/loopscheduler.h"
+
 namespace CMD {
    class CommandLineMgr; 
 }; // CMD
@@ -8,6 +13,22 @@ namespace CMD {
 namespace Cli {
     class Menu;
 }; // Cli
+
+class Cli::Menu
+{
+    private:
+        std::unique_ptr<cli::Menu> m_menu;
+        cli::Cli* m_cli;
+        cli::CliLocalTerminalSession* m_session;
+        cli::LoopScheduler* m_scheduler;
+
+    private:
+        void cliLocalSessionExitHandler(std::ostream&);
+        void defaultCommandHandler(std::ostream&, const std::string&);
+
+    public:
+        Menu();
+};
 
 class CMD::CommandLineMgr
 {
