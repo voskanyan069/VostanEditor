@@ -15,18 +15,15 @@ FIND_PACKAGE( CURL REQUIRED )
 SET( TARGET_LIBS ${TARGET_LIBS} cmd )
 SET( TARGET_LIBS ${TARGET_LIBS} curlwrp )
 SET( TARGET_LIBS ${TARGET_LIBS} remote )
+
 # 3rd party libraries
 SET( TARGET_LIBS ${TARGET_LIBS} CURL::libcurl )
 
 # Define files hierarchy structure
 INCLUDE_DIRECTORIES(
-    ${PROJECT_SOURCE_DIR}/inc
     ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/inc/cmd
     ${PROJECT_SOURCE_DIR}/src/cmd
-    ${PROJECT_SOURCE_DIR}/inc/curlwrp
     ${PROJECT_SOURCE_DIR}/src/curlwrp
-    ${PROJECT_SOURCE_DIR}/inc/remote
     ${PROJECT_SOURCE_DIR}/src/remote
     ${PROJECT_SOURCE_DIR}/third_party/cli/include/
     )

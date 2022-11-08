@@ -7,14 +7,11 @@
 #include "cli/loopscheduler.h"
 
 namespace CMD {
-   class CommandLineMgr; 
+    class CommandLineMgr; 
+    class Menu;
 }; // CMD
 
-namespace Cli {
-    class Menu;
-}; // Cli
-
-class Cli::Menu
+class CMD::Menu
 {
     private:
         std::unique_ptr<cli::Menu> m_menu;

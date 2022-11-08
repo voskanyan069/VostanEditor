@@ -6,7 +6,7 @@
 #include "cli/filehistorystorage.h"
 
 
-void Cli::Menu::
+void CMD::Menu::
 cliLocalSessionExitHandler(std::ostream& out)
 {
     out << "VostanEditor session closed!\n";
@@ -14,13 +14,13 @@ cliLocalSessionExitHandler(std::ostream& out)
     m_scheduler->Stop();
 }
 
-void Cli::Menu::
+void CMD::Menu::
 defaultCommandHandler(std::ostream& out, const std::string& cmd)
 {
     out << cmd << "\n";
 }
 
-Cli::Menu::
+CMD::Menu::
 Menu() :
     m_cli(nullptr),
     m_menu(nullptr),
@@ -29,10 +29,10 @@ Menu() :
 {
     cli::SetColor();
     m_menu = std::make_unique<cli::Menu>("VostanEditor");
-    m_cli = new cli::Cli( std::move(m_menu),
+    m_cli = new cli::CMD( std::move(m_menu),
             std::make_unique<cli::FileHistoryStorage>(".cli"));
     m_scheduler = new cli::LoopScheduler();
-    m_session = new cli::CliLocalTerminalSession(
+    m_session = new cli::CMDLocalTerminalSession(
             *m_cli, *m_scheduler, std::cout, 200);
     auto f = std::mem_fun(&Menu::cliLocalSessionExitHandler);
     m_session->ExitAction(std::bind(f, this, std::placeholders::_1));
