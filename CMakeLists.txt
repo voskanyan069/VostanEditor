@@ -5,7 +5,7 @@ CMAKE_MINIMUM_REQUIRED( VERSION 3.10 )
 PROJECT( VostanEditor VERSION 1.0 )
 
 # Build specifiactions
-SET( CMAKE_CXX_STANDARD 17 )
+SET( CMAKE_CXX_STANDARD 20 )
 SET( CMAKE_BUILD_TYPE DEBUG )
 
 # Find 3rd party modules
@@ -25,7 +25,9 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src/cmd
     ${PROJECT_SOURCE_DIR}/src/curlwrp
     ${PROJECT_SOURCE_DIR}/src/remote
+    ${PROJECT_SOURCE_DIR}/src/utils
     ${PROJECT_SOURCE_DIR}/third_party/cli/include/
+    ${PROJECT_SOURCE_DIR}/third_party/nlohmann/include/
     )
 
 # Specify files for each local library

@@ -26,7 +26,7 @@ Menu() :
     m_session(nullptr),
     m_scheduler(nullptr)
 {
-    cli::SetColor();
+    cli::SetNoColor();
     m_menu = std::make_unique<cli::Menu>("VostanEditor");
     m_cli = new cli::Cli( std::move(m_menu),
             std::make_unique<cli::FileHistoryStorage>(".cli"));

@@ -1,6 +1,8 @@
 #ifndef __REMOTE_METAX_REQUESTS_HXX__
 #define __REMOTE_METAX_REQUESTS_HXX__
 
+#include "utils/Types.hxx"
+
 #include <string>
 
 namespace Remote {
@@ -17,7 +19,7 @@ public:
 
     /// Getter/Setters
 public:
-    void GetHostname( /* ... */ );
+    std::string GetHostname();
 
     /// Public API for interaction with nodes
 public:
@@ -32,6 +34,7 @@ private:
     /// Helper members
 private:
     int m_iPort;
+    ConnType_t m_eConnType;
     std::string m_sRealHostName;
 };
 
