@@ -163,6 +163,11 @@ namespace cli
             exceptionHandler = handler;
         }
 
+        void DefaultCommandHandler(const std::function< void(std::ostream&, const std::string& cmd) >& handler)
+        {
+            defaultCommandHandler = handler;
+        }
+
         /**
          * @brief Get a global out stream object that can be used to print on every session currently connected (local and remote)
          * 
@@ -198,6 +203,15 @@ namespace cli
                 out << e.what() << '\n';
         }
 
+        void DefaultCommandHandler(std::ostream& out, const std::string& cmd)
+        {
+            if (defaultCommandHandler)
+                defaultCommandHandler(out, cmd);
+            else
+                out << "wrong command: " << cmd << '\n';
+        }
+
+
         void StoreCommands(const std::vector<std::string>& cmds)
         {
             globalHistoryStorage->Store(cmds);
@@ -213,6 +227,7 @@ namespace cli
         std::unique_ptr<Menu> rootMenu; // just to keep it alive
         std::function<void(std::ostream&)> exitAction;
         std::function<void(std::ostream&, const std::string& cmd, const std::exception& )> exceptionHandler;
+        std::function<void(std::ostream&, const std::string& cmd)> defaultCommandHandler;
     };
 
     // ********************************************************************
@@ -765,7 +780,8 @@ namespace cli
             if (!found) found = current->ScanCmds(strs, *this);
 
             if (!found) // error msg if not found
-                out << "wrong command: " << cmd << '\n';
+                // out << "wrong command: " << cmd << '\n';
+                cli.DefaultCommandHandler(out, cmd);
         }
         catch(const std::exception& e)
         {
