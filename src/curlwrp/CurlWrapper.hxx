@@ -15,6 +15,7 @@
 /// Forward declarations
 namespace Remote { namespace CurlWrapper {
     bool PingServer( const std::string& sUrl, int iTimeoutSec = 7 );
+    bool PostRequest( const std::string& sUrl );
     bool PostRequest( const std::string& sUrl,
             const std::string& sData,
             const Strings& vecHeaders,

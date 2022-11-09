@@ -1,5 +1,6 @@
 #include "curlwrp/CurlWrapper.hxx"
 #include "utils/Typedefs.hxx"
+#include "io/Messaging.hxx"
 
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
@@ -10,11 +11,13 @@
 
 bool checkRequestStatus( const CURLcode& eCode )
 {
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
     if ( CURLE_OK == eCode )
     {
+        pMsg->ShowMessage("Request successed\n");
         return true;
     }
-    std::cerr << "Request failed: " << (int)eCode << std::endl;
+    pMsg->ShowError("Request failed: [%d]\n", (int)eCode);
     return false;
 }
 
@@ -47,8 +50,8 @@ curl_slist* constructHttpHeader( const Strings& vecHeaders )
 bool sendCurlPostRequestImpl( const std::string& sUrl, const std::string& sData,
         const Strings& vecHeaders, std::string& sResponse )
 {
-    std::cout << "Sending request to " << sUrl
-        << " with \"" << sData << "\" content" << std::endl;
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
+    pMsg->ShowMessage("Sending request to %s with %s content\n", sUrl, sData);
     CURL* pCURL = curl_easy_init();
     curl_slist* pHeadersList = constructHttpHeader(vecHeaders);
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
@@ -64,7 +67,8 @@ bool sendCurlPostRequestImpl( const std::string& sUrl, const std::string& sData,
 
 bool sendCurlPingRequestImpl( const std::string& sUrl, int iTimeoutSec = 7 )
 {
-    std::cout << "Sending ping to " << sUrl << std::endl;
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
+    pMsg->ShowMessage("Sending ping to %s\n", sUrl);
     CURL* pCURL = curl_easy_init();
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
     curl_easy_setopt(pCURL, CURLOPT_CONNECTTIMEOUT, iTimeoutSec);
@@ -77,6 +81,12 @@ bool sendCurlPingRequestImpl( const std::string& sUrl, int iTimeoutSec = 7 )
 bool Remote::CurlWrapper::PingServer( const std::string& sUrl, int iTimeoutSec )
 {
     return sendCurlPingRequestImpl(sUrl, iTimeoutSec);
+}
+
+bool Remote::CurlWrapper::PostRequest( const std::string& sUrl )
+{
+    std::string sTmp;
+    return sendCurlPostRequestImpl(sUrl, "", {}, sTmp);
 }
 
 bool Remote::CurlWrapper::PostRequest(

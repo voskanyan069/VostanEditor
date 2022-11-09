@@ -6,4 +6,10 @@ typedef enum {
     IP_PORT
 } ConnType_t;
 
+typedef enum {
+    STD,
+    WARN,
+    ERROR
+} MessageType_t;
+
 #endif // __UTILS_TYPES_HXX__

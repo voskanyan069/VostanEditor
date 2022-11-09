@@ -47,19 +47,30 @@ std::string Remote::MetaxRequests::GetHostname()
     return m_sRealHostName;
 }
 
-void Remote::MetaxRequests::CreateNode( /* ... */ )
+std::string Remote::MetaxRequests::CreateNode( /* ... */ )
 {
     std::string sUrl = GetHostname() + CREATE_NODE_PATH;
     nlohmann::json oData;
     oData["test"] = "value";
     Strings vHeaders = {HEADER_CONTENT_TYPE(application/json)};
     std::string sResponse;
-    CurlWrapper::PostRequest(sUrl, oData, vHeaders, sResponse);
-    std::cout << "CreateNode response: " << sResponse << std::endl;
+    if ( Remote::CurlWrapper::PostRequest(sUrl, oData, vHeaders, sResponse) )
+    {
+        nlohmann::json oResponse = nlohmann::json::parse(sResponse);
+        return oResponse["uuid"];
+    }
+    return std::string();
 }
 
-void Remote::MetaxRequests::DeleteNode( const std::string& sUUID )
+bool Remote::MetaxRequests::DeleteNode( const std::string& sUUID )
 {
+    std::string sUrl = GetHostname() + DELETE_NODE_PATH + sUUID;
+    return Remote::CurlWrapper::PostRequest(sUrl);
+}
+
+bool Remote::MetaxRequests::UpdateNode( const std::string& sUUID /* ... */ )
+{
+    return true;
 }
 
 void Remote::MetaxRequests::GetNode( const std::string& sUUID,

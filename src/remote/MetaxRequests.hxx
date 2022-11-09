@@ -23,8 +23,9 @@ public:
 
     /// Public API for interaction with nodes
 public:
-    void CreateNode( /* ... */ );
-    void DeleteNode( const std::string& sUUID );
+    std::string CreateNode( /* ... */ );
+    bool DeleteNode( const std::string& sUUID );
+    bool UpdateNode( const std::string& sUUID /* ... */ );
     void GetNode( const std::string& sUUID, std::string& sResonseData );
 
     /// Helper member functions

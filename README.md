@@ -1,7 +1,7 @@
 # VostanEditor
 ## Install prerequisites
 ```
-sudo apt-get install g++ make cmake pkg-config libcurlpp-dev
+sudo apt-get install g++ make cmake pkg-config libcurlpp-dev libboost-all-dev
 ```
 
 ## Build
