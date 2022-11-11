@@ -47,11 +47,29 @@ curl_slist* constructHttpHeader( const Strings& vecHeaders )
     return pList;
 }
 
+bool sendCurlGetRequestImpl( const std::string& sUrl, const Strings& vecHeaders,
+    std::string& sResponse )
+{
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
+    pMsg->ShowMessage("Sending GET request to %s\n", sUrl);
+    CURL* pCURL = curl_easy_init();
+    curl_slist* pHeadersList = constructHttpHeader(vecHeaders);
+    curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
+    curl_easy_setopt(pCURL, CURLOPT_HTTPHEADER, pHeadersList);
+    curl_easy_setopt(pCURL, CURLOPT_WRITEFUNCTION, &writeToString);
+    curl_easy_setopt(pCURL, CURLOPT_WRITEDATA, &sResponse);
+    CURLcode eCode = curl_easy_perform(pCURL);
+    curl_slist_free_all(pHeadersList);
+    curl_easy_cleanup(pCURL);
+    return checkRequestStatus(eCode);
+}
+
 bool sendCurlPostRequestImpl( const std::string& sUrl, const std::string& sData,
         const Strings& vecHeaders, std::string& sResponse )
 {
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
-    pMsg->ShowMessage("Sending request to %s with %s content\n", sUrl, sData);
+    pMsg->ShowMessage("Sending POST request to %s with %s content\n",
+            sUrl, sData);
     CURL* pCURL = curl_easy_init();
     curl_slist* pHeadersList = constructHttpHeader(vecHeaders);
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
@@ -110,8 +128,15 @@ bool Remote::CurlWrapper::PostRequest(
 
 bool Remote::CurlWrapper::GetRequest(
         const std::string& sUrl,
+        std::string& sResponse )
+{
+    return sendCurlGetRequestImpl(sUrl, {}, sResponse);
+}
+
+bool Remote::CurlWrapper::GetRequest(
+        const std::string& sUrl,
         const Strings& vecHeaders,
         std::string& sResponse )
 {
-    return true;
+    return sendCurlGetRequestImpl(sUrl, vecHeaders, sResponse);
 }

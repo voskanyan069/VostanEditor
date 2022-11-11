@@ -25,6 +25,8 @@ namespace Remote { namespace CurlWrapper {
             const Strings& vecHeaders,
             std::string& sResponse );
     bool GetRequest( const std::string& sUrl,
+            std::string& sResponse );
+    bool GetRequest( const std::string& sUrl,
             const Strings& vecHeaders,
             std::string& sResponse );
 }; }; // Remote::CurlWrapper

@@ -3,7 +3,10 @@
 
 #include "utils/Types.hxx"
 
+#include <nlohmann/json.hpp>
+
 #include <string>
+#include <map>
 
 namespace Remote {
     class MetaxRequests;
@@ -23,10 +26,14 @@ public:
 
     /// Public API for interaction with nodes
 public:
-    std::string CreateNode( /* ... */ );
+    std::string CreateNode( const std::string& sNodeTitle );
+    bool UpdateNode( const std::string& sUUID,
+            const std::map<std::string, std::string>& mapPairs );
+    bool UpdateNode( const std::string& sUUID, const nlohmann::json& oData );
+    bool UpdateNode( const std::string& sUUID, const std::string& sKey,
+            const nlohmann::json& oData );
+    bool GetNode( const std::string& sUUID, std::string& sResponse );
     bool DeleteNode( const std::string& sUUID );
-    bool UpdateNode( const std::string& sUUID /* ... */ );
-    void GetNode( const std::string& sUUID, std::string& sResonseData );
 
     /// Helper member functions
 private:

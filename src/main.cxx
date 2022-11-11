@@ -23,11 +23,29 @@ void cleanMessaging()
 
 int main(int argc, char** argv)
 {
-    initMessaging();
-    //CMD::Menu* m_menu = new CMD::Menu();
     Remote::MetaxRequests* pMetax = new Remote::MetaxRequests("localhost",8001);
-    std::string sUUID = pMetax->CreateNode();
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
+    initMessaging();
+    /// Create node
+    std::string sResponse;
+    std::string sUUID = pMetax->CreateNode("New node");
+    pMetax->GetNode(sUUID, sResponse);
+    pMsg->ShowMessage("UUID: %s\n", sUUID);
+    pMsg->ShowMessage("CreatedNode: %s\n", sResponse);
+    /// Update node
+    nlohmann::json oData;
+    oData["value"] = "changed";
+    pMetax->UpdateNode(sUUID, oData);
+    sResponse = "";
+    pMetax->GetNode(sUUID, sResponse);
+    pMsg->ShowMessage("UUID: %s\n", sUUID);
+    pMsg->ShowMessage("UpdatedNode: %s\n", sResponse);
+    /// Delete node
     pMetax->DeleteNode(sUUID);
+    sResponse = "";
+    pMetax->GetNode(sUUID, sResponse);
+    pMsg->ShowMessage("UUID: %s\n", sUUID);
+    pMsg->ShowMessage("DeleteNode: %s\n", sResponse);
     delete pMetax;
     cleanMessaging();
     return 0;
