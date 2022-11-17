@@ -53,6 +53,8 @@ public:
 protected:
     void dumpTime( std::ostream* pStream );
     void dumpMsgType( std::ostream* pStream, const MessageType_t& eMsgType );
+    void checkForInnerMsgType( const std::string& sMessage,
+            MessageType_t& eType );
     void showMessage( const MessageType_t& eMsgType, const std::string& sMsg );
     void setConsoleColor( const MessageType_t& eMsgType, std::ostream* pOut );
     void resetConsole( std::ostream* pStream );

@@ -9,6 +9,9 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <mutex>
+
+static std::mutex s_oMsgMutex;
 
 IO::Messaging* IO::Messaging::GetInstance()
 {
@@ -56,7 +59,8 @@ void IO::Messaging::dumpMsgType( std::ostream* pStream,
     *pStream << " " << sMsgType << ": ";
 }
 
-void checkForInnerMsgType( const std::string& sMessage, MessageType_t& eType)
+void IO::Messaging::checkForInnerMsgType( const std::string& sMessage,
+        MessageType_t& eType )
 {
     std::string sMsg = sMessage;
     std::transform(sMsg.begin(), sMsg.end(), sMsg.begin(), tolower);
@@ -81,6 +85,7 @@ void IO::Messaging::showMessage( const MessageType_t& eMsgType,
 {
     MessageType_t eType = eMsgType;
     checkForInnerMsgType(sMessage, eType);
+    std::lock_guard<std::mutex> lock(s_oMsgMutex);
     for ( std::ostream* pStream : m_vecStreams )
     {
         setConsoleColor(eType, pStream);

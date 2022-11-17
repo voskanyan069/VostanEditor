@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 
-Remote::MetaxRequests* pMetax = new Remote::MetaxRequests("localhost",8001);
+Remote::MetaxRequests* pMetax = nullptr;
 IO::Messaging* pMsg = IO::Messaging::GetInstance();
 std::ostream* pLogFile = nullptr;
 Strings vecTempNodes;
@@ -29,10 +29,16 @@ std::string createNode()
 {
     std::string sResponse;
     std::string sUUID = pMetax->CreateNode("New node");
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s\n", sUUID);
-    pMsg->ShowMessage("CreatedNode: %s\n", sResponse);
-    vecTempNodes.push_back(sUUID);
+    if ( !sUUID.empty() && pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s\n", sUUID);
+        pMsg->ShowMessage("CreatedNode: %s\n", sResponse);
+        vecTempNodes.push_back(sUUID);
+    }
+    else
+    {
+        std::exit(-1);
+    }
     return sUUID;
 }
 
@@ -41,26 +47,41 @@ void updateNode( const std::string& sUUID )
     std::string sResponse;
     nlohmann::json oData;
     oData["value"] = "Updated Title";
-    pMetax->UpdateNode(sUUID, "title", oData);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s\n", sUUID);
-    pMsg->ShowMessage("UpdatedNode: %s\n", sResponse);
+    if ( pMetax->UpdateNode(sUUID, "title", oData) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s\n", sUUID);
+        pMsg->ShowMessage("UpdatedNode: %s\n", sResponse);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 }
 
 void addChildNode( const std::string& sUUID )
 {
     std::string sResponse;
     std::string sChildUUID = createNode();
-    pMetax->AddChildNode(sUUID, sChildUUID, true);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s | ChildUUID: %s\n", sUUID, sChildUUID);
-    pMsg->ShowMessage("AddedChild: %s\n", sResponse);
-    vecTempNodes.push_back(sChildUUID);
+    if ( pMetax->AddChildNode(sUUID, sChildUUID, true) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s | ChildUUID: %s\n", sUUID, sChildUUID);
+        pMsg->ShowMessage("AddedChild: %s\n", sResponse);
+        vecTempNodes.push_back(sChildUUID);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 
     std::string i;
     std::cout << "Enter to delete " << sChildUUID << " child...";
     std::getline(std::cin, i);
-    pMetax->DeleteChildNode(sUUID, sChildUUID, true);
+    if ( !pMetax->DeleteChildNode(sUUID, sChildUUID, true) )
+    {
+        std::exit(-1);
+    }
 }
 
 void addChildNodes( const std::string& sUUID, int iCount )
@@ -70,29 +91,49 @@ void addChildNodes( const std::string& sUUID, int iCount )
     for ( int i = 0; i < iCount; ++i )
     {
         std::string sChildUUID = createNode();
+        if ( sChildUUID.empty() )
+        {
+            std::exit(-1);
+        }
         vecChildUUID.push_back(sChildUUID);
         vecTempNodes.push_back(sChildUUID);
     }
-    pMetax->AddChildNode(sUUID, vecChildUUID);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s | ChildCount: %s\n", sUUID,vecChildUUID.size());
-    pMsg->ShowMessage("AddedChilds: %s\n", sResponse);
+    if ( pMetax->AddChildNode(sUUID, vecChildUUID) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s | ChildCount: %s\n",
+                sUUID, vecChildUUID.size());
+        pMsg->ShowMessage("AddedChilds: %s\n", sResponse);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 }
 
 void connectChildNode( const std::string& sUUID )
 {
     std::string sResponse;
     std::string sChildUUID = createNode();
-    pMetax->ConnectChildNode(sUUID, sChildUUID);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s | ChildUUID: %s\n", sUUID, sChildUUID);
-    pMsg->ShowMessage("ConnectChild: %s\n", sResponse);
-    vecTempNodes.push_back(sChildUUID);
+    if ( !sChildUUID.empty() && pMetax->ConnectChildNode(sUUID, sChildUUID) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s | ChildUUID: %s\n", sUUID, sChildUUID);
+        pMsg->ShowMessage("ConnectChild: %s\n", sResponse);
+        vecTempNodes.push_back(sChildUUID);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 
     std::string i;
     std::cout << "Enter to disconnect " << sChildUUID << " child...";
     std::getline(std::cin, i);
-    pMetax->DisconnectChildNode(sUUID, sChildUUID);
+    if ( !pMetax->DisconnectChildNode(sUUID, sChildUUID) )
+    {
+        std::exit(-1);
+    }
 }
 
 void connectChildNodes( const std::string& sUUID, int iCount )
@@ -102,22 +143,39 @@ void connectChildNodes( const std::string& sUUID, int iCount )
     for ( int i = 0; i < iCount; ++i )
     {
         std::string sChildUUID = createNode();
+        if ( sChildUUID.empty() )
+        {
+            std::exit(-1);
+        }
         vecChildUUID.push_back(sChildUUID);
         vecTempNodes.push_back(sChildUUID);
     }
-    pMetax->ConnectChildNode(sUUID, vecChildUUID);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s | ChildCount: %s\n", sUUID,vecChildUUID.size());
-    pMsg->ShowMessage("AddedChilds: %s\n", sResponse);
+    if ( pMetax->ConnectChildNode(sUUID, vecChildUUID) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s | ChildCount: %s\n",
+                sUUID, vecChildUUID.size());
+        pMsg->ShowMessage("AddedChilds: %s\n", sResponse);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 }
 
 void deleteNode( const std::string& sUUID )
 {
     std::string sResponse;
-    pMetax->DeleteNode(sUUID);
-    pMetax->GetNode(sUUID, sResponse);
-    pMsg->ShowMessage("UUID: %s\n", sUUID);
-    pMsg->ShowMessage("DeleteNode: %s\n", sResponse);
+    if ( pMetax->DeleteNode(sUUID) &&
+            pMetax->GetNode(sUUID, sResponse) )
+    {
+        pMsg->ShowMessage("UUID: %s\n", sUUID);
+        pMsg->ShowMessage("DeleteNode: %s\n", sResponse);
+    }
+    else
+    {
+        std::exit(-1);
+    }
 }
 
 void deleteNodes()
@@ -131,6 +189,8 @@ void deleteNodes()
 int main(int argc, char** argv)
 {
     initMessaging();
+    pMetax = new Remote::MetaxRequests("localhost",8001);
+
     std::string sUUID = createNode();
     updateNode(sUUID);
     addChildNode(sUUID);

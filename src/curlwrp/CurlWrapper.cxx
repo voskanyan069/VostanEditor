@@ -6,10 +6,14 @@
 #include <nlohmann/json.hpp>
 
 #include <string>
+#include <cstring>
 #include <vector>
+#include <thread>
 #include <iostream>
 
-bool checkRequestStatus( const CURLcode& eCode )
+static bool s_bConnected = false;
+
+bool checkRequestStatus( const CURLcode& eCode, char* sErrBuf )
 {
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
     if ( CURLE_OK == eCode )
@@ -17,7 +21,8 @@ bool checkRequestStatus( const CURLcode& eCode )
         pMsg->ShowMessage("Request successed\n");
         return true;
     }
-    pMsg->ShowError("Request failed: [%d]\n", (int)eCode);
+    sprintf(sErrBuf, "%s\n", curl_easy_strerror(eCode));
+    pMsg->ShowError("Request failed: [%d] %s", (int)eCode, sErrBuf);
     return false;
 }
 
@@ -52,16 +57,20 @@ bool sendCurlGetRequestImpl( const std::string& sUrl, const Strings& vecHeaders,
 {
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
     pMsg->ShowMessage("Sending GET request to %s\n", sUrl);
+    char sErrBuffer[CURL_ERROR_SIZE];
+    sErrBuffer[0] = 0;
     CURL* pCURL = curl_easy_init();
     curl_slist* pHeadersList = constructHttpHeader(vecHeaders);
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
     curl_easy_setopt(pCURL, CURLOPT_HTTPHEADER, pHeadersList);
+    curl_easy_setopt(pCURL, CURLOPT_CONNECTTIMEOUT, 5);
     curl_easy_setopt(pCURL, CURLOPT_WRITEFUNCTION, &writeToString);
     curl_easy_setopt(pCURL, CURLOPT_WRITEDATA, &sResponse);
+    curl_easy_setopt(pCURL, CURLOPT_ERRORBUFFER, sErrBuffer);
     CURLcode eCode = curl_easy_perform(pCURL);
     curl_slist_free_all(pHeadersList);
     curl_easy_cleanup(pCURL);
-    return checkRequestStatus(eCode);
+    return checkRequestStatus(eCode, sErrBuffer);
 }
 
 bool sendCurlPostRequestImpl( const std::string& sUrl, const std::string& sData,
@@ -70,30 +79,52 @@ bool sendCurlPostRequestImpl( const std::string& sUrl, const std::string& sData,
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
     pMsg->ShowMessage("Sending POST request to %s with %s content\n",
             sUrl, sData);
+    char sErrBuffer[CURL_ERROR_SIZE];
+    sErrBuffer[0] = 0;
     CURL* pCURL = curl_easy_init();
     curl_slist* pHeadersList = constructHttpHeader(vecHeaders);
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
     curl_easy_setopt(pCURL, CURLOPT_HTTPHEADER, pHeadersList);
+    curl_easy_setopt(pCURL, CURLOPT_CONNECTTIMEOUT, 5);
     curl_easy_setopt(pCURL, CURLOPT_POSTFIELDS, sData.c_str());
     curl_easy_setopt(pCURL, CURLOPT_WRITEFUNCTION, &writeToString);
     curl_easy_setopt(pCURL, CURLOPT_WRITEDATA, &sResponse);
+    curl_easy_setopt(pCURL, CURLOPT_ERRORBUFFER, sErrBuffer);
     CURLcode eCode = curl_easy_perform(pCURL);
     curl_slist_free_all(pHeadersList);
     curl_easy_cleanup(pCURL);
-    return checkRequestStatus(eCode);
+    return checkRequestStatus(eCode, sErrBuffer);
+}
+
+void showEstablishingLogs( int iSeconds )
+{
+    IO::Messaging* pMsg = IO::Messaging::GetInstance();
+    for ( ; !s_bConnected && 0 <= iSeconds; --iSeconds )
+    {
+        pMsg->ShowWarning("Seconds left for trying establish connection: "
+                "%d...\n", iSeconds);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 bool sendCurlPingRequestImpl( const std::string& sUrl, int iTimeoutSec = 7 )
 {
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
-    pMsg->ShowMessage("Sending ping to %s\n", sUrl);
+    s_bConnected = false;
+    pMsg->ShowMessage("Trying to establish connection to %s ...\n", sUrl);
+    std::thread outputTh(&showEstablishingLogs, iTimeoutSec);
+    outputTh.detach();
+    char sErrBuffer[CURL_ERROR_SIZE];
+    sErrBuffer[0] = 0;
     CURL* pCURL = curl_easy_init();
     curl_easy_setopt(pCURL, CURLOPT_URL, sUrl.c_str());
-    curl_easy_setopt(pCURL, CURLOPT_CONNECTTIMEOUT, iTimeoutSec);
+    curl_easy_setopt(pCURL, CURLOPT_CONNECTTIMEOUT, iTimeoutSec * 2);
     curl_easy_setopt(pCURL, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(pCURL, CURLOPT_ERRORBUFFER, sErrBuffer);
     CURLcode eCode = curl_easy_perform(pCURL);
     curl_easy_cleanup(pCURL);
-    return checkRequestStatus(eCode);
+    s_bConnected = checkRequestStatus(eCode, sErrBuffer);
+    return s_bConnected;
 }
 
 bool Remote::CurlWrapper::PingServer( const std::string& sUrl, int iTimeoutSec )

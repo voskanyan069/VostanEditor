@@ -22,7 +22,10 @@ Remote::MetaxRequests::~MetaxRequests()
 
 void Remote::MetaxRequests::esablishConnection()
 {
-    CurlWrapper::PingServer(GetHostname());
+    if ( !CurlWrapper::PingServer(GetHostname()) )
+    {
+        std::exit(-1);
+    }
 }
 
 void Remote::MetaxRequests::addChildToLayout( nlohmann::json& oLayoutNode,
