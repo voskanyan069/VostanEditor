@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 IO::Messaging* IO::Messaging::GetInstance()
 {
@@ -55,16 +56,38 @@ void IO::Messaging::dumpMsgType( std::ostream* pStream,
     *pStream << " " << sMsgType << ": ";
 }
 
+void checkForInnerMsgType( const std::string& sMessage, MessageType_t& eType)
+{
+    std::string sMsg = sMessage;
+    std::transform(sMsg.begin(), sMsg.end(), sMsg.begin(), tolower);
+    if ( std::string::npos != sMsg.find("error") )
+    {
+        eType = MessageType_t::ERROR;
+    }
+    else if ( std::string::npos != sMsg.find("warn") ||
+            std::string::npos != sMsg.find("warning") )
+    {
+        eType = MessageType_t::WARN;
+    }
+    else if ( std::string::npos != sMsg.find("info") ||
+            std::string::npos != sMsg.find("std") )
+    {
+        eType = MessageType_t::STD;
+    }
+}
+
 void IO::Messaging::showMessage( const MessageType_t& eMsgType,
         const std::string& sMessage )
 {
+    MessageType_t eType = eMsgType;
+    checkForInnerMsgType(sMessage, eType);
     for ( std::ostream* pStream : m_vecStreams )
     {
-        setConsoleColor(eMsgType, pStream);
+        setConsoleColor(eType, pStream);
         if ( &std::cout != pStream )
         {
             dumpTime(pStream);
-            dumpMsgType(pStream, eMsgType);
+            dumpMsgType(pStream, eType);
         }
         *pStream << sMessage;
         resetConsole(pStream);

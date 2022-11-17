@@ -16,3 +16,7 @@ make
 ```
 ./VostanEditor
 ```
+
+## TODO
+ - Add requests for interaction with node content
+ - Find out usage of "leaf" node

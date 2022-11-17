@@ -8,25 +8,10 @@
 #include <fstream>
 #include <ctime>
 
-Remote::MetaxRequests::MetaxRequests( const std::string& sHostName )
-    : m_sRealHostName( sHostName )
-    , m_iPort( 0 )
-    , m_eConnType( HOSTNAME )
-{
-    //std::size_t iIdx = sHostName.find(":");
-    //if ( std::string::npos != iIdx )
-    //{
-    //    m_sRealHostName = sHostName.substr(0, iIdx);
-    //    m_iPort = atoi(sHostName.substr(iIdx + 1));
-    //    m_eConnType = IP_PORT;
-    //}
-    esablishConnection();
-}
-
 Remote::MetaxRequests::MetaxRequests( const std::string& sHostName, int iPort )
     : m_sRealHostName( sHostName )
     , m_iPort( iPort )
-    , m_eConnType( IP_PORT )
+    , m_eConnType( (-1 == iPort) ? HOSTNAME : IP_PORT )
 {
     esablishConnection();
 }
@@ -38,6 +23,48 @@ Remote::MetaxRequests::~MetaxRequests()
 void Remote::MetaxRequests::esablishConnection()
 {
     CurlWrapper::PingServer(GetHostname());
+}
+
+void Remote::MetaxRequests::addChildToLayout( nlohmann::json& oLayoutNode,
+       const std::string& sChildUUID )
+{
+    nlohmann::json oLayoutChildNode;
+    oLayoutChildNode["node"] = nlohmann::json::object();
+    oLayoutChildNode["node"]["id"] = sChildUUID;
+    oLayoutChildNode["node"]["domain"] = "";
+    oLayoutChildNode["view"] = "1:1:1:1:1";
+    oLayoutChildNode["title"] = nlohmann::json::object();
+    oLayoutChildNode["title"]["view"] = "1:1:1:1:1";
+    oLayoutChildNode["img"] = nlohmann::json::object();
+    oLayoutChildNode["img"]["view"] = "1:1:1:1:1";
+    oLayoutChildNode["txt"] = nlohmann::json::object();
+    oLayoutChildNode["txt"]["view"] = "1:1:1:1:1";
+    oLayoutChildNode["leaf"] = 0;
+    oLayoutNode.push_back(oLayoutChildNode);
+}
+
+void Remote::MetaxRequests::addChildToOut( nlohmann::json& oOutNode,
+       const std::string& sChildUUID )
+{
+    nlohmann::json oOutChildNode;
+    oOutChildNode["node"] = nlohmann::json::object();
+    oOutChildNode["node"]["id"] = sChildUUID;
+    oOutChildNode["node"]["domain"] = "";
+    oOutChildNode["tag"] = "";
+    oOutNode.push_back(oOutChildNode);
+}
+
+int Remote::MetaxRequests::findNodeByUUID( const nlohmann::json& oArray,
+        const std::string& sUUID )
+{
+    for ( int i = 0; i < oArray.size(); ++i )
+    {
+        if ( sUUID == oArray[i]["node"]["id"] )
+        {
+            return i;
+        }
+    }
+    return -1;
 }
 
 std::string Remote::MetaxRequests::GetHostname()
@@ -127,4 +154,212 @@ bool Remote::MetaxRequests::DeleteNode( const std::string& sUUID )
 {
     std::string sUrl = GetHostname() + DELETE_NODE_PATH + sUUID;
     return Remote::CurlWrapper::PostRequest(sUrl);
+}
+
+bool Remote::MetaxRequests::AddChildNode( const std::string& sParentUUID,
+        const std::string& sChildUUID, bool bConnectNode )
+{
+    std::string sParentResponse;
+    std::string sChildResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    if ( !GetNode(sChildUUID, sChildResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    addChildToLayout(oLayoutNode, sChildUUID);
+    if ( bConnectNode )
+    {
+        nlohmann::json oOutNode = oParentNode["out"];
+        addChildToOut(oOutNode, sChildUUID);
+        if ( !UpdateNode(sParentUUID, "out", oOutNode) )
+        {
+            return false;
+        }
+    }
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
+}
+
+bool Remote::MetaxRequests::AddChildNode( const std::string& sParentUUID,
+        const Strings& vecChildUUID, bool bConnectNode )
+{
+    std::string sParentResponse;
+    std::string sChildResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    nlohmann::json oOutNode = oParentNode["out"];
+    for ( const auto& sChildUUID : vecChildUUID )
+    {
+        if ( !GetNode(sChildUUID, sChildResponse) )
+        {
+            continue;
+        }
+        addChildToLayout(oLayoutNode, sChildUUID);
+        if ( bConnectNode )
+        {
+            addChildToOut(oOutNode, sChildUUID);
+        }
+    }
+    if ( bConnectNode )
+    {
+        if ( !UpdateNode(sParentUUID, "out", oOutNode) )
+        {
+            return false;
+        }
+    }
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
+}
+
+bool Remote::MetaxRequests::ConnectChildNode( const std::string& sParentUUID,
+        const std::string& sChildUUID )
+{
+    std::string sParentResponse;
+    std::string sChildResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    if ( !GetNode(sChildUUID, sChildResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oOutNode = oParentNode["out"];
+    addChildToOut(oOutNode, sChildUUID);
+    return UpdateNode(sParentUUID, "out", oOutNode);
+}
+
+bool Remote::MetaxRequests::ConnectChildNode( const std::string& sParentUUID,
+        const Strings& vecChildUUID )
+{
+    std::string sParentResponse;
+    std::string sChildResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oOutNode = oParentNode["out"];
+    for ( const auto& sChildUUID : vecChildUUID )
+    {
+        if ( !GetNode(sChildUUID, sChildResponse) )
+        {
+            return false;
+        }
+        addChildToOut(oOutNode, sChildUUID);
+    }
+    return UpdateNode(sParentUUID, "out", oOutNode);
+}
+
+bool Remote::MetaxRequests::DisconnectChildNode( const std::string& sParentUUID,
+        const std::string& sChildUUID )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oOutNode = oParentNode["out"];
+    int iChildIdx = findNodeByUUID(oOutNode, sChildUUID);
+    if ( -1 == iChildIdx )
+    {
+        return false;
+    }
+    oOutNode.erase(iChildIdx);
+    return UpdateNode(sParentUUID, "out", oOutNode);
+}
+
+bool Remote::MetaxRequests::DisconnectChildNode( const std::string& sParentUUID,
+        const Strings& vecChildUUID )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oOutNode = oParentNode["out"];
+    for ( const auto& sChildUUID : vecChildUUID )
+    {
+        int iChildIdx = findNodeByUUID(oOutNode, sChildUUID);
+        if ( -1 == iChildIdx )
+        {
+            continue;
+        }
+        oOutNode.erase(iChildIdx);
+    }
+    return UpdateNode(sParentUUID, "out", oOutNode);
+}
+
+bool Remote::MetaxRequests::DeleteChildNode( const std::string& sParentUUID,
+        const std::string& sChildUUID, bool bDisconnectNode )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    int iChildIdx = findNodeByUUID(oLayoutNode, sChildUUID);
+    if ( -1 == iChildIdx )
+    {
+        return false;
+    }
+    oLayoutNode.erase(iChildIdx);
+    if ( bDisconnectNode )
+    {
+        nlohmann::json oOutNode = oParentNode["out"];
+        int iIdx = findNodeByUUID(oOutNode, sChildUUID);
+        if ( -1 != iChildIdx )
+        {
+            oOutNode.erase(iIdx);
+        }
+        UpdateNode(sParentUUID, "out", oOutNode);
+    }
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
+}
+
+bool Remote::MetaxRequests::DeleteChildNode( const std::string& sParentUUID,
+        const Strings& vecChildUUID, bool bDisconnectNode )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    nlohmann::json oOutNode = oParentNode["out"];
+    for ( const auto& sChildUUID : vecChildUUID )
+    {
+        int iChildIdx = findNodeByUUID(oLayoutNode, sChildUUID);
+        if ( -1 == iChildIdx )
+        {
+            continue;
+        }
+        oLayoutNode.erase(iChildIdx);
+        if ( bDisconnectNode )
+        {
+            int iIdx = findNodeByUUID(oOutNode, sChildUUID);
+            if ( -1 != iChildIdx )
+            {
+                oOutNode.erase(iIdx);
+            }
+        }
+    }
+    if ( bDisconnectNode )
+    {
+        UpdateNode(sParentUUID, "out", oOutNode);
+    }
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
 }

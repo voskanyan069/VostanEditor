@@ -2,6 +2,7 @@
 #define __REMOTE_METAX_REQUESTS_HXX__
 
 #include "utils/Types.hxx"
+#include "utils/Typedefs.hxx"
 
 #include <nlohmann/json.hpp>
 
@@ -16,8 +17,7 @@ class Remote::MetaxRequests
 {
     /// Public API for instanse creation
 public:
-    MetaxRequests( const std::string& sHostName );
-    MetaxRequests( const std::string& sHostName, int iPort );
+    MetaxRequests( const std::string& sHostName, int iPort = -1 );
     ~MetaxRequests();
 
     /// Getter/Setters
@@ -34,10 +34,59 @@ public:
             const nlohmann::json& oData );
     bool GetNode( const std::string& sUUID, std::string& sResponse );
     bool DeleteNode( const std::string& sUUID );
+    bool AddChildNode( const std::string& sParentUUID,
+            const std::string& sChildUUID, bool bConnectNode = false );
+    bool AddChildNode( const std::string& sParentUUID,
+            const Strings& vecChildUUID, bool bConnectNode = false );
+    bool ConnectChildNode( const std::string& sParentUUID,
+            const std::string& sChildUUID );
+    bool ConnectChildNode( const std::string& sParentUUID,
+            const Strings& vecChildUUID );
+    bool DisconnectChildNode( const std::string& sParentUUID,
+            const std::string& sChildUUID );
+    bool DisconnectChildNode( const std::string& sParentUUID,
+            const Strings& vecChildUUID );
+    bool DeleteChildNode( const std::string& sParentUUID,
+            const std::string& sChildUUID, bool bDisconnectNode = false );
+    bool DeleteChildNode( const std::string& sParentUUID,
+            const Strings& vecChildUUID, bool bDisconnectNode = false );
+
+    /* TODO
+    bool SetDimensions( const std::string& sUUID, ... );
+    bool SetChildDimensions( const std::string& sUUID, ... );
+    bool SetChildLeafCount( const std::string& sUUID, ... );
+    */
+
+    /// Public API for interaction with node content
+public:
+    /* TODO
+    bool UpdateTitle( const std::string& sUUID, ... );
+    bool UpdateText( const std::string& sUUID, ... );
+    bool UpdateImage( const std::string& sUUID, ... );
+    bool UpdateTags( const std::string& sUUID, ... );
+    bool SetTitleVisibility( const std::string& sUUID, ... );
+    bool SetTextVisibility( const std::string& sUUID, ... );
+    bool SetImageVisibility( const std::string& sUUID, ... );
+    bool SetTitleDimensions( const std::string& sUUID, ... );
+    bool SetTextDimensions( const std::string& sUUID, ... );
+    bool SetImageDimensions( const std::string& sUUID, ... );
+    bool SetChildTitleVisibility( const std::string& sUUID, ... );
+    bool SetChildTextVisibility( const std::string& sUUID, ... );
+    bool SetChildImageVisibility( const std::string& sUUID, ... );
+    bool SetChildTitleDimensions( const std::string& sUUID, ... );
+    bool SetChildTextDimensions( const std::string& sUUID, ... );
+    bool SetChildImageDimensions( const std::string& sUUID, ... );
+    */
 
     /// Helper member functions
 private:
     void esablishConnection();
+    void addChildToLayout( nlohmann::json& oLayoutNode,
+            const std::string& sChildUUID );
+    void addChildToOut( nlohmann::json& oOutNode,
+            const std::string& sChildUUID );
+    int findNodeByUUID( const nlohmann::json& oArray,
+            const std::string& sUUID );
 
     /// Helper members
 private:
