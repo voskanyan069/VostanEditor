@@ -11,6 +11,7 @@ SET( CMAKE_BUILD_TYPE DEBUG )
 # Find 3rd party modules
 FIND_PACKAGE( CURL REQUIRED )
 FIND_PACKAGE( Boost REQUIRED )
+FIND_PACKAGE( TCL REQUIRED )
 
 # Local libraries
 SET( TARGET_LIBS ${TARGET_LIBS} cmd_line )
@@ -21,6 +22,7 @@ SET( TARGET_LIBS ${TARGET_LIBS} tcl8.6 )
 
 # 3rd party libraries
 SET( TARGET_LIBS ${TARGET_LIBS} CURL::libcurl )
+SET( TARGET_LIBS ${TARGET_LIBS} ${TCL_LIBRARY} )
 
 # Define files hierarchy structure
 INCLUDE_DIRECTORIES(
