@@ -13,10 +13,12 @@ FIND_PACKAGE( CURL REQUIRED )
 FIND_PACKAGE( Boost REQUIRED )
 
 # Local libraries
-SET( TARGET_LIBS ${TARGET_LIBS} cmd )
+SET( TARGET_LIBS ${TARGET_LIBS} cmd_line )
+SET( TARGET_LIBS ${TARGET_LIBS} commands )
 SET( TARGET_LIBS ${TARGET_LIBS} remote )
 SET( TARGET_LIBS ${TARGET_LIBS} curlwrp )
 SET( TARGET_LIBS ${TARGET_LIBS} io )
+SET( TARGET_LIBS ${TARGET_LIBS} tcl8.6 )
 
 # 3rd party libraries
 SET( TARGET_LIBS ${TARGET_LIBS} CURL::libcurl )
@@ -24,27 +26,29 @@ SET( TARGET_LIBS ${TARGET_LIBS} CURL::libcurl )
 # Define files hierarchy structure
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/src/cmd
+    ${PROJECT_SOURCE_DIR}/src/cmd_line
     ${PROJECT_SOURCE_DIR}/src/curlwrp
     ${PROJECT_SOURCE_DIR}/src/remote
     ${PROJECT_SOURCE_DIR}/src/utils
     ${PROJECT_SOURCE_DIR}/src/io
     ${PROJECT_SOURCE_DIR}/third_party/cli/include/
     ${PROJECT_SOURCE_DIR}/third_party/nlohmann/include/
-    ${Boost_INCLUDE_DIRS}
+    ${BOOST_INCLUDE_DIRS}
+    ${TCL_INCLUDE_PATH}
     )
 
 # Specify files for each local library
-FILE( GLOB CMD_SOURCES "${PROJECT_SOURCE_DIR}/src/cmd/*.cxx" )
+FILE( GLOB CMD_LINE_SOURCES "${PROJECT_SOURCE_DIR}/src/cmd_line/*.cxx" )
 FILE( GLOB CURLWRP_SOURCES "${PROJECT_SOURCE_DIR}/src/curlwrp/*.cxx" )
 FILE( GLOB REMOTE_SOURCES "${PROJECT_SOURCE_DIR}/src/remote/*.cxx" )
 FILE( GLOB IO_SOURCES "${PROJECT_SOURCE_DIR}/src/io/*.cxx" )
 
 # Define local libraries
-ADD_LIBRARY( cmd SHARED ${CMD_SOURCES} )
+ADD_LIBRARY( cmd_line SHARED ${CMD_LINE_SOURCES} )
 ADD_LIBRARY( curlwrp SHARED ${CURLWRP_SOURCES} )
 ADD_LIBRARY( remote SHARED ${REMOTE_SOURCES} )
 ADD_LIBRARY( io SHARED ${IO_SOURCES} )
+# ADD_LIBRARY( tcl86 SHARED ${TCL_LIBRARY} )
 
 # Define executables
 ADD_EXECUTABLE( VostanEditor "${PROJECT_SOURCE_DIR}/src/main.cxx" )
