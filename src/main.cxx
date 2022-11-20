@@ -1,5 +1,6 @@
 //#include "cmd/CommandLineMgr.hxx"
 #include "remote/MetaxRequests.hxx"
+#include "cmd_line/CommandLineMgr.hxx"
 #include "io/Messaging.hxx"
 #include "utils/Defines.hxx"
 #include "utils/Typedefs.hxx"
@@ -186,25 +187,42 @@ void deleteNodes()
     }
 }
 
+void start_cli(CMD::TclEngine* tcl_engine)
+{
+    CMD::Menu* cmd_mgr = new CMD::Menu(tcl_engine);
+    cmd_mgr->start();
+}
+
 int main(int argc, char** argv)
 {
     initMessaging();
-    pMetax = new Remote::MetaxRequests("localhost",8001);
+    // pMetax = new Remote::MetaxRequests("localhost",8001);
 
-    std::string sUUID = createNode();
-    updateNode(sUUID);
-    addChildNode(sUUID);
-    addChildNodes(sUUID, 5);
-    connectChildNode(sUUID);
-    connectChildNodes(sUUID, 5);
+    // std::string sUUID = createNode();
+    // updateNode(sUUID);
+    // addChildNode(sUUID);
+    // addChildNodes(sUUID, 5);
+    // connectChildNode(sUUID);
+    // connectChildNodes(sUUID, 5);
 
-    std::string i;
-    std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
-    std::cout << "\nEnter to exit...";
-    std::getline(std::cin, i);
+    // std::string i;
+    // std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
+    // std::cout << "\nEnter to exit...";
+    // std::getline(std::cin, i);
 
-    deleteNodes();
-    cleanMessaging();
-    delete pMetax;
+    // deleteNodes();
+    // cleanMessaging();
+    // delete pMetax;
+    for (int ai = 1; ai < argc && strcmp(argv[ai], "--"); ai++) {
+        if (argv[ai][0] == '-') {
+            if (strcmp("-cli", argv[ai]) == 0) {
+                CMD::TclEngine* tcl_engine = new CMD::TclEngine();
+                start_cli(tcl_engine);
+            } else {
+                std::cout << "\nWrong paramters: " << argv[ai] << std::endl;
+            }
+        }
+    }
+
     return 0;
 }
