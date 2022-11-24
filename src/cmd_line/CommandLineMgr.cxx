@@ -34,6 +34,14 @@ Menu(CMD::TclEngine* tcl_engine) :
 {
     cli::SetColor();
     m_menu = std::make_unique<cli::Menu>("VostanEditor");
+    m_menu -> Insert(
+            "no_color",
+            [](std::ostream& out){ out << "Colors OF\n"; cli::SetNoColor(); },
+            "Disable colors in the cli" );
+    m_menu -> Insert(
+            "color",
+            [](std::ostream& out){ out << "Colors ON\n"; cli::SetColor(); },
+            "Enable colors in the cli" );
     m_cli = new cli::Cli( std::move(m_menu),
             std::make_unique<cli::FileHistoryStorage>(".cli"));
     m_scheduler = new cli::LoopScheduler();

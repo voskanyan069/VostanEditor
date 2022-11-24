@@ -7,6 +7,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+// Headers from other projects
+#include "commands/CommandIndex.hxx"
+
 namespace CMD {
     // class Menu;
     class TclEngine;
@@ -21,6 +24,9 @@ class CMD::TclEngine
     public:
         TclEngine();
     
+    private:
+        void initCommands();
+
     public:
         void evalCommand(const std::string&);
 };

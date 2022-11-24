@@ -15,6 +15,13 @@ evalCommand(const std::string& cmd)
 
 }
 
+void CMD::TclEngine::
+initCommands()
+{
+    commands::CommandIndex* cmd_index = new commands::CommandIndex();
+    const auto cmds = cmd_index->getCommands();
+}
+
 CMD::TclEngine::
 TclEngine() :
     m_interpreter(nullptr)

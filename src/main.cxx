@@ -1,4 +1,5 @@
-//#include "cmd/CommandLineMgr.hxx"
+#include "cmd_line/CommandLineMgr.hxx"
+#include "cmd_line/TclEngine.hxx"
 #include "remote/MetaxRequests.hxx"
 #include "io/Messaging.hxx"
 #include "utils/Defines.hxx"
@@ -206,6 +207,7 @@ void deleteNodes()
 int main(int argc, char** argv)
 {
     initMessaging();
+<<<<<<< HEAD
     pMetax = new Remote::MetaxRequests("localhost",8001);
 
     std::string sUUID = createNode();
@@ -223,5 +225,18 @@ int main(int argc, char** argv)
     deleteNodes();
     cleanMessaging();
     delete pMetax;
+=======
+    for (int ai = 1; ai < argc && strcmp(argv[ai], "--"); ai++)
+    {
+        if (argv[ai][0] == '-') {
+            if (strcmp("-cli", argv[ai]) == 0) {
+                CMD::TclEngine* tcl_engine = new CMD::TclEngine(); 
+                start_cli(tcl_engine);
+            } else {
+                std::cout << "\nWrong paramters: " << argv[ai] << std::endl;
+            }
+        }
+    }
+>>>>>>> f89678a (EVS ONE FUCKIN COMMIT.)
     return 0;
 }
