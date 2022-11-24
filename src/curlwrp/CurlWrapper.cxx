@@ -107,7 +107,8 @@ void showEstablishingLogs( int iSeconds )
     }
 }
 
-bool sendCurlPingRequestImpl( const std::string& sUrl, int iTimeoutSec = 7 )
+bool sendCurlPingRequestImpl( const std::string& sUrl,
+        unsigned int iTimeoutSec = 7 )
 {
     IO::Messaging* pMsg = IO::Messaging::GetInstance();
     s_bConnected = false;
@@ -127,7 +128,8 @@ bool sendCurlPingRequestImpl( const std::string& sUrl, int iTimeoutSec = 7 )
     return s_bConnected;
 }
 
-bool Remote::CurlWrapper::PingServer( const std::string& sUrl, int iTimeoutSec )
+bool Remote::CurlWrapper::PingServer( const std::string& sUrl,
+        unsigned int iTimeoutSec )
 {
     return sendCurlPingRequestImpl(sUrl, iTimeoutSec);
 }
