@@ -6,10 +6,10 @@
 #include <map>
 
 // Headers from this project
-#include "commands/CommandBase.hxx"
 
 namespace commands {
     class CommandIndex;
+    class CommandBase;
     typedef std::vector<CommandBase*> COMMAND_VECTOR;
 }
 
