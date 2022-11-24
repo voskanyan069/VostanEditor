@@ -17,7 +17,18 @@
 #define RESET_TERMINAL "\033[0m"
 
 /// Default JSON node
-#define NODE_JSON "{\"id\":\"#\",\"uuid\":\"#\",\"enc\":\"0\",\"view\":\"1:800:84:227:86\",\"title\":{\"value\":\"#\",\"view\":\"1:54:24:153:34\"},\"txt\":{\"value\":\"\",\"view\":\"0:undefined:undefined:undefined:undefined\"},\"img\":{\"value\":\"\",\"view\":\"0:undefined:undefined:undefined:undefined\"},\"script\":\"\",\"viewers\":\"all\",\"tags\":[],\"in\":[],\"out\":[],\"layout\":[],\"created\":\"#0\",\"updated\":\"#0\",\"saved\":0,\"deleted\":0,\"moved\":{\"date\":0,\"domain\":\"\",\"id\":\"\"},\"domain\":\"\"}"
+#define NODE_JSON "{\"id\":\"#\",\"uuid\":\"#\",\"enc\":\"0\",\"view\":\"1:20:20:20:20\",\"title\":{\"value\":\"#\",\"view\":\"0:undefined:undefined:undefined:undefined\"},\"txt\":{\"value\":\"\",\"view\":\"0:undefined:undefined:undefined:undefined\"},\"img\":{\"value\":\"\",\"view\":\"0:undefined:undefined:undefined:undefined\"},\"script\":\"\",\"viewers\":\"all\",\"tags\":[],\"in\":[],\"out\":[],\"layout\":[],\"created\":\"#0\",\"updated\":\"#0\",\"saved\":0,\"deleted\":0,\"moved\":{\"date\":0,\"domain\":\"\",\"id\":\"\"},\"domain\":\"\"}"
+
+/// Values
+#define DEFAULT_DIM {0, -1, -1, -1, -1}
+#define RESTORE_DIM {1, -2, -2, -2, -2}
+#define DEFAULT_DIM_STR "0:-1:-1:-1:-1"
+
+/// Functions
+#define STRING_DIM(X) (( -1 == X ) ? "undefined" : std::to_string(X))
+#define DIM2STR(OBJ) STRING_DIM(OBJ.show) + ":" + \
+    STRING_DIM(OBJ.top) + ":" + STRING_DIM(OBJ.left) + ":" + \
+    STRING_DIM(OBJ.width) + ":" + STRING_DIM(OBJ.height)
 
 /// Deallocate
 #define DELETE_PTR(PTR) if ( nullptr != PTR )  delete PTR;

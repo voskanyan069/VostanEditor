@@ -46,8 +46,17 @@ void updateNode( const std::string& sUUID )
 {
     std::string sResponse;
     nlohmann::json oData;
-    oData["value"] = "Updated Title";
-    if ( pMetax->UpdateNode(sUUID, "title", oData) &&
+    if ( pMetax->UpdateTitle(sUUID, "Updated Title", {1, 20, 40, 60, 80}) &&
+            pMetax->UpdateTitle(sUUID, "UT 2", {1, 20, -2, 60, -1}) &&
+            pMetax->UpdateText(sUUID, "Updated Text", {1, 20, -2, 20, -1}) &&
+            pMetax->SetTitleVisibility(sUUID, false) &&
+            pMetax->SetImageVisibility(sUUID, true) &&
+            pMetax->SetImageDimensions(sUUID, {0, 10, 10, 10, 10}) &&
+            pMetax->SetTextDimensions(sUUID, {1, 60, -2, -1, -1}) &&
+            pMetax->SetTags(sUUID, {"tag1"}) &&
+            pMetax->SetTags(sUUID, {"tag2", "tag3"}) &&
+            pMetax->AddTags(sUUID, {"tag4", "tag5"}) &&
+            pMetax->SetDimensions(sUUID, {1, 2, -1, 5, 6}) &&
             pMetax->GetNode(sUUID, sResponse) )
     {
         pMsg->ShowMessage("UUID: %s\n", sUUID);
@@ -170,7 +179,15 @@ void deleteNode( const std::string& sUUID )
             pMetax->GetNode(sUUID, sResponse) )
     {
         pMsg->ShowMessage("UUID: %s\n", sUUID);
-        pMsg->ShowMessage("DeleteNode: %s\n", sResponse);
+        std::size_t iIdx = sResponse.find("Getting file failed");
+        if ( std::string::npos == iIdx )
+        {
+            pMsg->ShowMessage("DeleteNode: %s\n", sResponse);
+        }
+        else
+        {
+            pMsg->ShowMessage("DeleteNode: %s successfully deleted\n", sUUID);
+        }
     }
     else
     {
@@ -193,10 +210,10 @@ int main(int argc, char** argv)
 
     std::string sUUID = createNode();
     updateNode(sUUID);
-    addChildNode(sUUID);
-    addChildNodes(sUUID, 5);
-    connectChildNode(sUUID);
-    connectChildNodes(sUUID, 5);
+    //addChildNode(sUUID);
+    //addChildNodes(sUUID, 5);
+    //connectChildNode(sUUID);
+    //connectChildNodes(sUUID, 5);
 
     std::string i;
     std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;

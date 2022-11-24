@@ -3,10 +3,13 @@
 #include "utils/Defines.hxx"
 
 #include <nlohmann/json.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <algorithm>
+#include <regex>
 
 Remote::MetaxRequests::MetaxRequests( const std::string& sHostName, int iPort )
     : m_sRealHostName( sHostName )
@@ -68,6 +71,93 @@ int Remote::MetaxRequests::findNodeByUUID( const nlohmann::json& oArray,
         }
     }
     return -1;
+}
+
+void Remote::MetaxRequests::str2dim( const std::string& sStr,
+        Dimensions_t& tDim )
+{
+    std::vector<int> vTokens;
+    std::string sToken;
+    std::string sDim(sStr);
+    boost::replace_all(sDim, "undefined", "-1");
+    std::istringstream sTokenStream(sDim);
+    while ( std::getline(sTokenStream, sToken, ':') )
+    {
+        vTokens.push_back(stoi(sToken));
+    }
+    tDim.show = vTokens[0];
+    tDim.top = vTokens[1];
+    tDim.left = vTokens[2];
+    tDim.width = vTokens[3];
+    tDim.height = vTokens[4];
+}
+
+Dimensions_t Remote::MetaxRequests::getPreviousDim(
+        const nlohmann::json& oPrevDim )
+{
+    Dimensions_t tDim = DEFAULT_DIM;
+    std::string sDim = oPrevDim["view"];
+    str2dim(sDim, tDim);
+    return tDim;
+}
+
+void Remote::MetaxRequests::restoreDimIfNeeded( const Dimensions_t& tDim,
+        const Dimensions_t& tPrevDim, Dimensions_t& tNewDim )
+{
+    if ( tDim.show == -2 )
+    {
+        tNewDim.show = tPrevDim.show;
+    }
+    if ( tDim.top == -2 )
+    {
+       tNewDim.top = tPrevDim.top;
+    } 
+    if ( tDim.left == -2 )
+    {
+       tNewDim.left = tPrevDim.left;
+    } 
+    if ( tDim.width == -2 )
+    {
+       tNewDim.width = tPrevDim.width;
+    } 
+    if ( tDim.height == -2 )
+    {
+       tNewDim.height = tPrevDim.height;
+    } 
+}
+
+bool Remote::MetaxRequests::changeVisibility( const std::string& sUUID,
+        const std::string& sKey, bool bValue,
+        const UpdateContentFunc& fCallback )
+{
+    Dimensions_t tDim = RESTORE_DIM;
+    tDim.show = bValue;
+    return changeDimensions(sUUID, sKey, tDim, fCallback);
+}
+
+bool Remote::MetaxRequests::changeDimensions( const std::string& sUUID,
+        const std::string& sKey, const Dimensions_t& tDim,
+        const UpdateContentFunc& fCallback )
+{
+    std::string sResponse;
+    if ( !GetNode(sUUID, sResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oData = nlohmann::json::parse(sResponse);
+    return fCallback(sUUID, oData[sKey]["value"], tDim);
+}
+
+
+void Remote::MetaxRequests::updateNodeContent( const nlohmann::json& oData,
+        const std::string& sKey, const std::string& sValue,
+        const Dimensions_t& tDim, nlohmann::json& oUpdNode )
+{
+    Dimensions_t tNewDim = tDim;
+    Dimensions_t tPrevDim = getPreviousDim(oData[sKey]);
+    restoreDimIfNeeded(tDim, tPrevDim, tNewDim);
+    oUpdNode["view"] = DIM2STR(tNewDim);
+    oUpdNode["value"] = sValue;
 }
 
 std::string Remote::MetaxRequests::GetHostname()
@@ -151,6 +241,137 @@ bool Remote::MetaxRequests::GetNode( const std::string& sUUID,
 {
     std::string sUrl = GetHostname() + GET_NODE_PATH + sUUID;
     return Remote::CurlWrapper::GetRequest(sUrl, sResponse);
+}
+
+bool Remote::MetaxRequests::SetDimensions( const std::string& sUUID,
+        const Dimensions_t& tDim )
+{
+    std::string sDim = DIM2STR(tDim);
+    return UpdateNode(sUUID, "view", sDim);
+}
+
+bool Remote::MetaxRequests::UpdateTitle( const std::string& sUUID,
+        const std::string& sValue, const Dimensions_t& tDim )
+{
+    std::string sResponse;
+    if ( !GetNode(sUUID, sResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oData = nlohmann::json::parse(sResponse);
+    nlohmann::json oUpdData;
+    updateNodeContent(oData, "title", sValue, tDim, oUpdData);
+    return UpdateNode(sUUID, "title", oUpdData);
+}
+
+bool Remote::MetaxRequests::UpdateText( const std::string& sUUID,
+        const std::string& sValue, const Dimensions_t& tDim )
+{
+    std::string sResponse;
+    if ( !GetNode(sUUID, sResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oData = nlohmann::json::parse(sResponse);
+    nlohmann::json oUpdData;
+    updateNodeContent(oData, "txt", sValue, tDim, oUpdData);
+    return UpdateNode(sUUID, "txt", oUpdData);
+}
+
+bool Remote::MetaxRequests::UpdateImage( const std::string& sUUID,
+        const std::string& sValue, const Dimensions_t& tDim )
+{
+    std::string sResponse;
+    if ( !GetNode(sUUID, sResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oData = nlohmann::json::parse(sResponse);
+    nlohmann::json oUpdData;
+    updateNodeContent(oData, "img", sValue, tDim, oUpdData);
+    return UpdateNode(sUUID, "img", oUpdData);
+}
+
+bool Remote::MetaxRequests::SetTags( const std::string& sUUID,
+        const Strings& vTags )
+{
+    nlohmann::json oData = nlohmann::json::array();
+    for ( const auto& sTag : vTags )
+    {
+        oData.push_back(sTag);
+    }
+    return UpdateNode(sUUID, "tags", oData);
+}
+
+bool Remote::MetaxRequests::AddTags( const std::string& sUUID,
+        const Strings& vTags )
+{
+    std::string sResponse;
+    if ( !GetNode(sUUID, sResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oData = nlohmann::json::parse(sResponse);
+    nlohmann::json oTagsData = oData["tags"];
+    for ( const auto& sTag : vTags )
+    {
+        oTagsData.push_back(sTag);
+    }
+    return UpdateNode(sUUID, "tags", oTagsData);
+}
+
+bool Remote::MetaxRequests::SetTitleVisibility( const std::string& sUUID,
+        bool bValue )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateTitle,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeVisibility(sUUID, "title", bValue, fCallback);
+}
+
+bool Remote::MetaxRequests::SetTextVisibility( const std::string& sUUID,
+        bool bValue )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateText,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeVisibility(sUUID, "txt", bValue, fCallback);
+}
+
+bool Remote::MetaxRequests::SetImageVisibility( const std::string& sUUID,
+        bool bValue )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateImage,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeVisibility(sUUID, "img", bValue, fCallback);
+}
+
+bool Remote::MetaxRequests::SetTitleDimensions( const std::string& sUUID,
+        const Dimensions_t& tDim )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateTitle,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeDimensions(sUUID, "title", tDim, fCallback);
+}
+
+bool Remote::MetaxRequests::SetTextDimensions( const std::string& sUUID,
+        const Dimensions_t& tDim )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateText,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeDimensions(sUUID, "txt", tDim, fCallback);
+}
+
+bool Remote::MetaxRequests::SetImageDimensions( const std::string& sUUID,
+        const Dimensions_t& tDim )
+{
+    UpdateContentFunc fCallback = std::bind(&Remote::MetaxRequests::UpdateImage,
+            this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3);
+    return changeDimensions(sUUID, "img", tDim, fCallback);
 }
 
 bool Remote::MetaxRequests::DeleteNode( const std::string& sUUID )
