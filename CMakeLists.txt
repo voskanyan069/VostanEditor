@@ -51,3 +51,6 @@ ADD_EXECUTABLE( VostanEditor "${PROJECT_SOURCE_DIR}/src/main.cxx" )
 
 # Link executables to libraries
 TARGET_LINK_LIBRARIES( VostanEditor ${TARGET_LIBS} )
+
+# Copy commands
+FILE( COPY "${PROJECT_SOURCE_DIR}/scripts" DESTINATION "${CMAKE_BINARY_DIR}" )
