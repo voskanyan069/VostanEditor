@@ -15,7 +15,6 @@ Strings vecTempNodes;
 
 void initMessaging()
 {
-    IO::Messaging* pMsg = IO::Messaging::GetInstance();
     pLogFile = new std::ofstream("editor.log", std::ios_base::app);
     pMsg->RegisterStream(&std::cout);
     pMsg->RegisterStream(pLogFile);
@@ -23,7 +22,7 @@ void initMessaging()
 
 void cleanMessaging()
 {
-    DELETE_PTR(pLogFile);
+    DELETE_PTR( pLogFile );
 }
 
 std::string createNode()
@@ -84,14 +83,6 @@ void addChildNode( const std::string& sUUID )
     {
         std::exit(-1);
     }
-
-    std::string i;
-    std::cout << "Enter to delete " << sChildUUID << " child...";
-    std::getline(std::cin, i);
-    if ( !pMetax->DeleteChildNode(sUUID, sChildUUID, true) )
-    {
-        std::exit(-1);
-    }
 }
 
 void addChildNodes( const std::string& sUUID, int iCount )
@@ -133,14 +124,6 @@ void connectChildNode( const std::string& sUUID )
         vecTempNodes.push_back(sChildUUID);
     }
     else
-    {
-        std::exit(-1);
-    }
-
-    std::string i;
-    std::cout << "Enter to disconnect " << sChildUUID << " child...";
-    std::getline(std::cin, i);
-    if ( !pMetax->DisconnectChildNode(sUUID, sChildUUID) )
     {
         std::exit(-1);
     }
@@ -212,10 +195,10 @@ int main(int argc, char** argv)
 
     std::string sUUID = createNode();
     updateNode(sUUID);
-    //addChildNode(sUUID);
-    //addChildNodes(sUUID, 5);
-    //connectChildNode(sUUID);
-    //connectChildNodes(sUUID, 5);
+    addChildNode(sUUID);
+    addChildNodes(sUUID, 5);
+    connectChildNode(sUUID);
+    connectChildNodes(sUUID, 5);
 
     std::string i;
     std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
