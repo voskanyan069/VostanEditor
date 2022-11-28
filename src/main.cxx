@@ -189,26 +189,24 @@ void deleteNodes()
 
 int main(int argc, char** argv)
 {
-    initMessaging();
-<<<<<<< HEAD
-    pMetax = new Remote::MetaxRequests("localhost",8001);
+    // initMessaging();
+    // pMetax = new Remote::MetaxRequests("localhost",8001);
 
-    std::string sUUID = createNode();
-    updateNode(sUUID);
-    addChildNode(sUUID);
-    addChildNodes(sUUID, 5);
-    connectChildNode(sUUID);
-    connectChildNodes(sUUID, 5);
+    // std::string sUUID = createNode();
+    // updateNode(sUUID);
+    // addChildNode(sUUID);
+    // addChildNodes(sUUID, 5);
+    // connectChildNode(sUUID);
+    // connectChildNodes(sUUID, 5);
 
-    std::string i;
-    std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
-    std::cout << "\nEnter to exit...";
-    std::getline(std::cin, i);
+    // std::string i;
+    // std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
+    // std::cout << "\nEnter to exit...";
+    // std::getline(std::cin, i);
 
-    deleteNodes();
-    cleanMessaging();
-    delete pMetax;
-=======
+    // deleteNodes();
+    // cleanMessaging();
+    // delete pMetax;
     for (int ai = 1; ai < argc && strcmp(argv[ai], "--"); ai++)
     {
         if (argv[ai][0] == '-') {
@@ -220,6 +218,5 @@ int main(int argc, char** argv)
             }
         }
     }
->>>>>>> f89678a (EVS ONE FUCKIN COMMIT.)
     return 0;
 }
