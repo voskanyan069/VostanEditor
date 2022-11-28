@@ -39,94 +39,113 @@
 
 namespace cli
 {
-namespace detail
-{
-
-class InputHandler
-{
-public:
-    InputHandler(CliSession& _session, InputDevice& kb) :
-        session(_session),
-        terminal(session.OutStream())
+    namespace detail
     {
-        kb.Register( [this](auto key){ this->Keypressed(key); } );
-    }
 
-private:
-
-    void Keypressed(std::pair<KeyType, char> k)
-    {
-        const std::pair<Symbol,std::string> s = terminal.Keypressed(k);
-        NewCommand(s);
-    }
-
-    void NewCommand(const std::pair<Symbol, std::string>& s)
-    {
-        switch (s.first)
+        class InputHandler
         {
-            case Symbol::nothing:
+            public:
+                InputHandler(CliSession& _session, InputDevice& kb) :
+                    session(_session),
+                    terminal(session.OutStream())
             {
-                break;
+                kb.Register( [this](auto key){ this->Keypressed(key); } );
             }
-            case Symbol::eof:
-            {
-                session.Exit();
-                break;
-            }
-            case Symbol::command:
-            {
-                session.Feed(s.second);
-                session.Prompt();
-                break;
-            }
-            case Symbol::down:
-            {
-                terminal.SetLine(session.NextCmd());
-                break;
-            }
-            case Symbol::up:
-            {
-                auto line = terminal.GetLine();
-                terminal.SetLine(session.PreviousCmd(line));
-                break;
-            }
-            case Symbol::tab:
-            {
-                auto line = terminal.GetLine();
-                auto completions = session.GetCompletions(line);
 
-                if (completions.empty())
-                    break;
-                if (completions.size() == 1)
+            private:
+
+                void Keypressed(std::pair<KeyType, char> k)
                 {
-                    terminal.SetLine(completions[0]+' ');
-                    break;
+                    const std::pair<Symbol,std::string> s = terminal.Keypressed(k);
+                    NewCommand(s);
                 }
 
-                auto commonPrefix = CommonPrefix(completions);
-                if (commonPrefix.size() > line.size())
+                std::string CompleteOption(const std::string& l, const std::string& o)
                 {
-                    terminal.SetLine(commonPrefix);
-                    break;
+                    return l.substr(0, l.rfind(' ')) + ' ' + o;
                 }
-                session.OutStream() << '\n';
-                std::string items;
-                std::for_each( completions.begin(), completions.end(), [&items](auto& cmd){ items += '\t' + cmd; } );
-                session.OutStream() << items << '\n';
-                session.Prompt();
-                terminal.ResetCursor();
-                terminal.SetLine( line );
-                break;
-            }
-        }
 
-    }
+                void NewCommand(const std::pair<Symbol, std::string>& s)
+                {
+                    switch (s.first)
+                    {
+                        case Symbol::nothing:
+                            {
+                                break;
+                            }
+                        case Symbol::eof:
+                            {
+                                session.Exit();
+                                break;
+                            }
+                        case Symbol::command:
+                            {
+                                session.Feed(s.second);
+                                session.Prompt();
+                                break;
+                            }
+                        case Symbol::down:
+                            {
+                                terminal.SetLine(session.NextCmd());
+                                break;
+                            }
+                        case Symbol::up:
+                            {
+                                auto line = terminal.GetLine();
+                                terminal.SetLine(session.PreviousCmd(line));
+                                break;
+                            }
+                        case Symbol::tab:
+                            {
+                                auto line = terminal.GetLine();
+                                auto completions = session.GetCompletions(line);
 
-    CliSession& session;
-    Terminal terminal;
-};
+                                if (completions.size() == 1)
+                                {
+                                    terminal.SetLine(completions[0]+' ');
+                                    break;
+                                } else if ( ! completions.empty()) {
+                                    auto commonPrefix = CommonPrefix(completions);
+                                    if (commonPrefix.size() > line.size())
+                                    {
+                                        terminal.SetLine(commonPrefix);
+                                        break;
+                                    }
+                                }
 
-} // namespace detail
+                                auto options = session.GetOptionCompletions(line);
+                                if (1 == options.size()) {
+                                    std::string n = CompleteOption(line, options[0]);
+                                    terminal.SetLine(n + ' ');
+                                    break;
+                                } else if (! options.empty()) {
+                                    auto commonOptionPrefix = CommonPrefix(options);
+                                    std::string n = CompleteOption(line, commonOptionPrefix);
+                                    if (n.size() > line.size()) {
+                                        terminal.SetLine(n);
+                                        break;
+                                    }
+                                }
+
+                                session.OutStream() << '\n';
+                                std::string items;
+                                std::for_each( completions.begin(), completions.end(), [&items](auto& cmd){ items += '\t' + cmd; } );
+                                std::for_each( options.begin(), options.end(), [&items](auto& cmd){ items += '\t' + cmd; } );
+                                session.OutStream() << items << '\n';
+                                session.Prompt();
+                                terminal.ResetCursor();
+                                terminal.SetLine( line );
+                                break;
+                            }
+                    }
+
+                }
+
+                CliSession& session;
+                Terminal terminal;
+        };
+
+    } // namespace detail
 } // namespace cli
 
 #endif // CLI_DETAIL_INPUTHANDLER_H_

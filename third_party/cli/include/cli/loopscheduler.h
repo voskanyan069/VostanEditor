@@ -68,12 +68,6 @@ public:
         while( ExecOne() ) {};
     }
 
-    bool Stopped() const
-    {
-        std::lock_guard<std::mutex> lck (mtx);
-        return !running;
-    }
-
     void Post(const std::function<void()>& f) override
     {
         std::lock_guard<std::mutex> lck (mtx);
@@ -99,27 +93,10 @@ public:
         return true;
     }
 
-    bool PollOne()
-    {
-        std::function<void()> task;
-        {
-            std::lock_guard<std::mutex> lck(mtx);
-            if (!running || tasks.empty())
-                return false;
-            task = tasks.front();
-            tasks.pop();
-        }
-
-        if (task)
-            task();
-
-        return true;
-    }
-
 private:
     std::queue<std::function<void()>> tasks;
     bool running{ true };
-    mutable std::mutex mtx;
+    std::mutex mtx;
     std::condition_variable cv;
 };
 

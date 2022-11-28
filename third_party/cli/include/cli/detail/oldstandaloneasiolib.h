@@ -47,7 +47,6 @@ class OldStandaloneAsioLib
 public:
 
     using ContextType = asio::io_service;
-    using WorkGuard = asio::io_service::work;
 
     class Executor
     {

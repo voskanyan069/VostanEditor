@@ -46,7 +46,6 @@ class NewStandaloneAsioLib
 public:
 
     using ContextType = asio::io_context;
-    using WorkGuard = asio::executor_work_guard<asio::io_context::executor_type>;
 
     class Executor
     {

@@ -46,7 +46,6 @@ class NewBoostAsioLib
 public:
 
     using ContextType = boost::asio::io_context;
-    using WorkGuard = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
     class Executor
     {

@@ -32,12 +32,11 @@
 
 #include <thread>
 #include <memory>
+#include <atomic>
 
 #include <cstdio>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/select.h>
-#include <cassert>
 
 #include "inputdevice.h"
 
@@ -47,108 +46,43 @@ namespace cli
 namespace detail
 {
 
-class InputSource
-{
-public:
-
-    InputSource()
-    {
-        int pipes[2];
-        if (pipe(pipes) == 0)
-        {
-            shutdownPipe = pipes[1]; // we store the write end
-            readPipe = pipes[0]; // ... and the read end
-        }
-    }
-
-    void WaitKbHit()
-    {
-        fd_set rfds;
-        FD_ZERO(&rfds);
-        FD_SET(STDIN_FILENO, &rfds);
-        FD_SET(readPipe, &rfds);
-
-        while (select(readPipe + 1, &rfds, nullptr, nullptr, nullptr) == 0);
-
-        if (FD_ISSET(readPipe, &rfds)) // stop called
-        {
-            close(readPipe);
-            throw std::runtime_error("InputSource stop");
-        }
-
-        if (FD_ISSET(STDIN_FILENO, &rfds)) // char from stdinput
-        {
-            return;
-        }
-
-        // cannot reach this point
-        assert(false);
-    }
-
-    void Stop()
-    {
-        auto unused = write(shutdownPipe, " ", 1);
-		unused = close(shutdownPipe);
-        static_cast<void>(unused); // silence unused warn
-		shutdownPipe = -1;
-    }
-
-private:
-    int shutdownPipe;
-    int readPipe;
-};
-
-//
-
-
 class LinuxKeyboard : public InputDevice
 {
 public:
     explicit LinuxKeyboard(Scheduler& _scheduler) :
-        InputDevice(_scheduler),
-        servant( [this]() noexcept { Read(); } )
+        InputDevice(_scheduler)
     {
         ToManualMode();
+        servant = std::make_unique<std::thread>( [this](){ Read(); } );
+        servant->detach();
     }
     ~LinuxKeyboard() override
     {
+        run = false;
         ToStandardMode();
-        is.Stop();
-        servant.join();
     }
 
 private:
 
-    void Read() noexcept
+    void Read()
     {
-        try
+        while ( run )
         {
-            while (true)
-            {
-                auto k = Get();
-                Notify(k);
-            }
+            auto k = Get();
+            Notify(k);
         }
-        catch(const std::exception&)
-        {
-            // nothing to do: just exit
-        }        
     }
 
     std::pair<KeyType,char> Get()
     {
-        is.WaitKbHit();
-
         int ch = std::getchar();
-        switch(ch)
+        switch( ch )
         {
             case EOF:
             case 4:  // EOT
                 return std::make_pair(KeyType::eof,' ');
                 break;
-            case 127:
-            case 8:
-                return std::make_pair(KeyType::backspace,' '); break;
+            case 127: return std::make_pair(KeyType::backspace,' '); break;
             case 10: return std::make_pair(KeyType::ret,' '); break;
             case 27: // symbol
                 ch = std::getchar();
@@ -186,21 +120,21 @@ private:
         constexpr tcflag_t ICANON_FLAG = ICANON;
         constexpr tcflag_t ECHO_FLAG = ECHO;
 
-        tcgetattr(STDIN_FILENO, &oldt);
+        tcgetattr( STDIN_FILENO, &oldt );
         newt = oldt;
         newt.c_lflag &= ~( ICANON_FLAG | ECHO_FLAG );
-        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+        tcsetattr( STDIN_FILENO, TCSANOW, &newt );
     }
 
     void ToStandardMode()
     {
-        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
     }
 
     termios oldt;
     termios newt;
-    InputSource is;
-    std::thread servant;
+    std::atomic<bool> run{ true };
+    std::unique_ptr<std::thread> servant;
 };
 
 } // namespace detail
