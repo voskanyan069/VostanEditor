@@ -1,6 +1,8 @@
 #include "remote/MetaxRequests.hxx"
 #include "curlwrp/CurlWrapper.hxx"
 #include "utils/Defines.hxx"
+#include "utils/VostanException.hxx"
+#include "io/Messaging.hxx"
 
 #include <nlohmann/json.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -27,7 +29,7 @@ void Remote::MetaxRequests::esablishConnection()
 {
     if ( !CurlWrapper::PingServer(GetHostname()) )
     {
-        std::exit(-1);
+        throw vostan_exception("Can not connect to host " + GetHostname());
     }
 }
 
@@ -182,8 +184,16 @@ std::string Remote::MetaxRequests::CreateNode( const std::string& sNodeTitle )
     std::string sUUID;
     if ( Remote::CurlWrapper::PostRequest(sUrl, oData, vHeaders, sResponse) )
     {
+        std::cout << "res: " << sResponse << std::endl;
         nlohmann::json oResponse = nlohmann::json::parse(sResponse);
+        try
+        {
+            std::string sErrMsg = oResponse["error"];
+            IO::Messaging::GetInstance()->ShowError(sErrMsg);
+        }
+        catch ( const nlohmann::json& ) {}
         sUUID = oResponse["uuid"];
+        std::cout << "uuid: " << sUUID << std::endl;
         std::map<std::string, std::string> mapUpdates = {
             {"id", sUUID},
             {"uuid", sUUID}
