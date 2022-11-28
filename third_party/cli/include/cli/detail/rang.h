@@ -30,8 +30,6 @@
 #include <iterator>
 #include <type_traits>
 
-namespace cli {
-namespace detail {
 namespace rang {
 
 enum class style {
@@ -291,10 +289,7 @@ inline rang_implementation::enableControl<T> operator<<(
     }
     return os;
 }
-
 } // namespace rang
-} // namespace detail
-} // namespace cli
 
 #undef OS_LINUX
 #undef OS_WIN

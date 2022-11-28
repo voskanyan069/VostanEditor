@@ -1,5 +1,5 @@
-#ifndef __CMDS_COMMAND_BASE_HXX__
-#define __CMDS_COMMAND_BASE_HXX__
+#ifndef __CMDS_COMMAND_INDEX_HXX__
+#define __CMDS_COMMAND_INDEX_HXX__
 
 // Standard headers
 #include <vector>
@@ -16,16 +16,16 @@ namespace commands {
 class commands::CommandIndex
 {
     public:
-        const COMMAND_VECTOR& getCommands();
-        void load();
+        static const COMMAND_VECTOR& getCommands();
+        static void load();
 
     private:
-        COMMAND_VECTOR m_commands;
-        void registerCommand(CommandBase*);
+        static COMMAND_VECTOR m_commands;
+        static void registerCommand(CommandBase*);
 
-    public:
+    private:
         CommandIndex();
         ~CommandIndex();
 };
 
-#endif // __CMDS_COMMAND_BASE_HXX__
+#endif // __CMDS_COMMAND_INDEX_HXX__

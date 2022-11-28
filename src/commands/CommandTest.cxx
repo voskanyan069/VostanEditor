@@ -1,17 +1,13 @@
 #include "commands/CommandTest.hxx"
 
+#include "utils/VostanException.hxx"
 
-// commands::CommandTest::
-// CommandTest()
-// : CommandBase()
-// {
-//     registerParam("-CommandTest", "ufhuehf");
-// }
-// 
-// commands::CommandTest::
-// ~CommandTest()
-// {
-// }
+commands::CommandTest::
+CommandTest()
+: CommandBase()
+{
+    registerParam("-CommandTest", "ufhuehf");
+}
 
 std::string commands::CommandTest::
 getName()
@@ -25,9 +21,25 @@ getDescription()
     return "CommandTest description";
 }
 
-int commands::CommandTest::
+std::string commands::CommandTest::
 run()
 {
+    if (isParamProvided("-CommandTest")) {
+        std::cout << getParamValue<std::string>("-CommandTest") << std::endl;
+        return "";
+        // throw vostan_exception("fiehji");
+    }
     std::cout << "TESTTTTT" << std::endl;
-    return 0;
+    std::cout << "TESTTTTT" << std::endl;
+    std::cout << "TESTTTTT" << std::endl;
+    std::cout << "TESTTTTT" << std::endl;
+    std::cout << "TESTTTTT" << std::endl;
+    std::cout << "TESTTTTT" << std::endl;
+    std::cout << "TESTTTTT" << std::endl;
+    return "";
+}
+
+commands::CommandTest::
+~CommandTest()
+{
 }

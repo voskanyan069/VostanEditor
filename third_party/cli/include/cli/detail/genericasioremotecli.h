@@ -77,15 +77,14 @@ protected:
 
         // https://www.ibm.com/support/knowledgecenter/SSLTBW_1.13.0/com.ibm.zos.r13.hald001/telcmds.htm
 
-        static const std::string iacDoLineMode{ "\x0FF\x0FD\x022", 3 };
+        std::string iacDoLineMode{ "\x0FF\x0FD\x022", 3 };
         this -> OutStream() << iacDoLineMode << std::flush;
 
-        static const std::string iacSbLineMode0IacSe{ "\x0FF\x0FA\x022\x001\x000\x0FF\x0F0", 7 };
+        std::string iacSbLineMode0IacSe{ "\x0FF\x0FA\x022\x001\x000\x0FF\x0F0", 7 };
         this -> OutStream() << iacSbLineMode0IacSe << std::flush;
 
-        static const std::string iacWillEcho{ "\x0FF\x0FB\x001", 3 };
+        std::string iacWillEcho{ "\x0FF\x0FB\x001", 3 };
         this -> OutStream() << iacWillEcho << std::flush;
-
 /*
         constexpr char IAC = '\x0FF'; // 255
         constexpr char DO = '\x0FD'; // 253
@@ -167,12 +166,6 @@ protected:
     }
 #else
 
-    /*
-    See
-    https://www.iana.org/assignments/telnet-options/telnet-options.xhtml
-    for a list of telnet options
-    */
-
     enum
     {
         SE = '\x0F0',                  // End of subnegotiation parameters.
@@ -207,33 +200,32 @@ protected:
                                        // or confirmation that you are no
                                        // longer expecting the other party
                                        // to perform, the indicated option.
-        IAC = '\x0FF',                 // Data Byte 255.
-
-        _ECHO = '\x001',
-        SUPPRESS_GO_AHEAD = '\x003',
-        TERMINAL_TYPE = '\x018',
-        NEGOTIATE_ABOUT_WIN_SIZE = '\x01F',
-        TERMINAL_SPEED = '\x020',
-        NEW_ENV_OPTION = '\x027'
+        IAC = '\x0FF'                  // Data Byte 255.
     };
+
 
     void OnDataReceived(const std::string& _data) override
     {
-        for (auto c: _data)
+        for (char c: _data)
             Consume(c);
     }
 
 private:
 
-    void Consume(signed char c)
+    void Consume(char c)
     {
         if (escape)
         {
             if (c == IAC)
+            {
                 Data(c);
+                escape = false;
+            }
             else
+            {
                 Command(c);
-            escape = false;
+                escape = false;
+            }
         }
         else
         {
@@ -244,7 +236,7 @@ private:
         }
     }
 
-    void Data(signed char c)
+    void Data(char c)
     {
         switch(state)
         {
@@ -252,22 +244,22 @@ private:
                 Output(c);
                 break;
             case State::sub:
-                RxSub(c);
+                Sub(c);
                 break;
             case State::wait_will:
-                RxWill(c);
+                Will(c);
                 state = State::data;
                 break;
             case State::wait_wont:
-                RxWont(c);
+                Wont(c);
                 state = State::data;
                 break;
             case State::wait_do:
-                RxDo(c);
+                Do(c);
                 state = State::data;
                 break;
             case State::wait_dont:
-                RxDont(c);
+                Dont(c);
                 state = State::data;
                 break;
         }
@@ -303,7 +295,7 @@ private:
                 if (state == State::sub)
                     state = State::data;
                 else
-                    std::cerr << "ERROR: received SE when not in sub state\n";
+                    std::cout << "ERROR: received SE when not in sub state" << std::endl;
                 break;
             case DataMark: // ?
             case Break: // ?
@@ -341,24 +333,15 @@ private:
         }
     }
 
-    void RxWill(char c)
+    void Will(char c) 
     { 
         #ifdef CLI_TELNET_TRACE
         std::cout << "will " << static_cast<int>(c) << std::endl;
+        #else
+        (void)c;
         #endif
-        switch(c)
-        {
-            case SUPPRESS_GO_AHEAD:
-                SendIacCmd(WILL, SUPPRESS_GO_AHEAD);
-                break;
-            case NEGOTIATE_ABOUT_WIN_SIZE: 
-                SendIacCmd(DO, NEGOTIATE_ABOUT_WIN_SIZE);
-                break;
-            default:
-                SendIacCmd(DONT, c);
-        };
     }
-    void RxWont(char c)
+    void Wont(char c)
     { 
         #ifdef CLI_TELNET_TRACE
         std::cout << "wont " << static_cast<int>(c) << std::endl;
@@ -366,24 +349,15 @@ private:
         (void)c;
         #endif
     }
-    void RxDo(char c)
+    void Do(char c)
     { 
         #ifdef CLI_TELNET_TRACE
         std::cout << "do " << static_cast<int>(c) << std::endl;
+        #else
+        (void)c;
         #endif
-        switch (c)
-        {
-            case _ECHO:
-                SendIacCmd(DO, _ECHO);
-                break;
-            case SUPPRESS_GO_AHEAD:
-                SendIacCmd(WILL, SUPPRESS_GO_AHEAD);
-                break;
-            default:
-                SendIacCmd(WONT, c);
-        };
     }
-    void RxDont(char c)
+    void Dont(char c) 
     {
         #ifdef CLI_TELNET_TRACE
         std::cout << "dont " << static_cast<int>(c) << std::endl;
@@ -391,7 +365,7 @@ private:
         (void)c;
         #endif
     }
-    void RxSub(char c)
+    void Sub(char c) 
     { 
         #ifdef CLI_TELNET_TRACE
         std::cout << "sub: " << static_cast<int>(c) << std::endl;
@@ -399,15 +373,8 @@ private:
         (void)c;
         #endif
     }
-    void SendIacCmd(char action, char op)
-    {
-        std::string answer("\x0FF\x000\x000", 3);
-        answer[1] = action;
-        answer[2] = op;
-        this -> OutStream() << answer << std::flush;
-    }
 protected:
-    virtual void Output(signed char c)
+    virtual void Output(char c)
     {
         #ifdef CLI_TELNET_TRACE
         std::cout << "data: " << static_cast<int>(c) << std::endl;
@@ -427,8 +394,36 @@ private:
     {
         if (std::isprint(c)) std::cout << c << std::endl;
         else std::cout << "0x" << std::hex << static_cast<int>(c) << std::dec << std::endl;
+/*
+        switch ( c )
+        {
+        case 0: break;
+        case '\n':
+        case '\r':
+        {
+            // trim trailing spaces
+            std::size_t endpos = buffer.find_last_not_of(" \t\r\n");
+            if( std::string::npos != endpos ) buffer = buffer.substr( 0, endpos+1 );
+            if ( cliSession.Feed( buffer ) ) cliSession.Prompt();
+            else Disconnect();
+
+            buffer.clear();
+            break;
+        }
+        default:
+            Echo( c );
+            buffer += c;
+        }
+*/
     }
+/*
+    void Echo( char c )
+    {
+        this -> OutStream() << c << std::flush;
+    }
+*/
     std::string buffer;
+    //bool waitAck = false;
 };
 
 template <typename ASIOLIB>
@@ -466,7 +461,7 @@ protected:
         Prompt();
     }
 
-    void Output(signed char c) override // NB: C++ does not specify wether char is signed or unsigned
+    void Output(char c) override
     {
         switch(step)
         {

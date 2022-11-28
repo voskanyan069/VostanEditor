@@ -1,6 +1,8 @@
 #include "commands/CommandIndex.hxx"
 #include "commands/CommandTest.hxx"
 
+commands::COMMAND_VECTOR commands::CommandIndex::m_commands;
+
 void commands::CommandIndex::
 load()
 {
@@ -17,9 +19,4 @@ void commands::CommandIndex::
 registerCommand(CommandBase* command)
 {
     m_commands.push_back(command);
-}
-
-commands::CommandIndex::
-CommandIndex()
-{
 }

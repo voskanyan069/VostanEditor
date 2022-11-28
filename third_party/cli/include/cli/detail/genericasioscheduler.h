@@ -31,7 +31,6 @@
 #define CLI_DETAIL_GENERICASIOSCHEDULER_H_
 
 #include "../scheduler.h"
-#include <memory> // unique_ptr
 
 namespace cli
 {
@@ -44,50 +43,26 @@ class GenericAsioScheduler : public Scheduler
 public:
 
     using ContextType = typename ASIOLIB::ContextType;
-    using WorkGuard = typename ASIOLIB::WorkGuard;
 
-    GenericAsioScheduler() :
-        owned{true},
-        context{new ContextType()},
-        executor{*context},
-        work{std::make_unique<WorkGuard>(ASIOLIB::MakeWorkGuard(*context))}
-    {}
+    GenericAsioScheduler() : owned{true}, context{new ContextType()}, executor{*context} {}
 
     explicit GenericAsioScheduler(ContextType& _context) : context{&_context}, executor{*context} {}
 
-    ~GenericAsioScheduler() override
-    {
-        if (owned)
-        {
-            work.reset(); // work uses context, so it must be deleted before context
-            delete context;
-        }
-    }
+    ~GenericAsioScheduler() override { if (owned) delete context; }
 
     // non copyable
     GenericAsioScheduler(const GenericAsioScheduler&) = delete;
     GenericAsioScheduler& operator=(const GenericAsioScheduler&) = delete;
 
-    void Stop()
-    {
-        if (work)
-            work->reset(); 
-        context->stop();
-    }
+    void Stop() { context->stop(); }
 
     void Run()
     {
+        auto work = ASIOLIB::MakeWorkGuard(*context);
         context->run();
     }
 
-    bool Stopped() const
-    {
-        return context->stopped();
-    }
-
     void ExecOne() { context->run_one(); }
-
-    void PollOne() { context->poll_one(); }
 
     void Post(const std::function<void()>& f) override
     {
@@ -103,7 +78,6 @@ private:
     bool owned = false;
     ContextType* context;
     ExecutorType executor;
-    std::unique_ptr<WorkGuard> work;
 };
 
 

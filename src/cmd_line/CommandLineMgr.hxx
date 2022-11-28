@@ -25,6 +25,9 @@ class CMD::Menu
     private:
         void cliLocalSessionExitHandler(std::ostream&);
         void defaultCommandHandler(std::ostream&, const std::string&);
+        void commandHandler(std::ostream& out, const std::string&,
+                std::vector<std::string>);
+        void initCommands();
 
     public:
         void start();

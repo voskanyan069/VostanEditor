@@ -1,4 +1,6 @@
 #include "cmd_line/CommandLineMgr.hxx"
+#include "commands/CommandIndex.hxx"
+#include "commands/CommandBase.hxx"
 
 #include "cli/cli.h"
 #include "cli/clilocalsession.h"
@@ -19,9 +21,45 @@ defaultCommandHandler(std::ostream& out, const std::string& cmd)
 }
 
 void CMD::Menu::
+commandHandler(std::ostream& out, const std::string& cmd,
+        std::vector<std::string> args)
+{
+    assert(0 != m_tcl_engine);
+    std::string command = cmd + " ";
+    for(auto a: args) {
+        command += " " + a;
+    }
+    m_tcl_engine->evalCommand(command);
+}
+
+void CMD::Menu::
 start()
 {
     m_scheduler->Run();
+}
+
+void CMD::Menu::
+initCommands()
+{
+    typedef std::vector<std::string> SV;
+    assert(nullptr != m_menu);
+    const auto cmds = commands::CommandIndex::getCommands();
+    for (auto cmd: cmds) {
+        assert(nullptr != cmd);
+        SV param_names;
+        const commands::CommandBase::PARAMETERS& params = cmd->getParameters();
+        for(auto p: params) {
+            param_names.push_back(p.name);
+        }
+        std::string cmd_name = cmd->getName();
+        m_menu->Insert(cmd_name,
+                param_names,
+                [this, cmd_name](std::ostream& out, SV data) {
+                    commandHandler(out, cmd_name, data);
+                },
+                cmd->getDescription(),
+                param_names);
+    }
 }
 
 CMD::Menu::
@@ -34,14 +72,7 @@ Menu(CMD::TclEngine* tcl_engine) :
 {
     cli::SetColor();
     m_menu = std::make_unique<cli::Menu>("VostanEditor");
-    m_menu -> Insert(
-            "no_color",
-            [](std::ostream& out){ out << "Colors OF\n"; cli::SetNoColor(); },
-            "Disable colors in the cli" );
-    m_menu -> Insert(
-            "color",
-            [](std::ostream& out){ out << "Colors ON\n"; cli::SetColor(); },
-            "Enable colors in the cli" );
+    initCommands();
     m_cli = new cli::Cli( std::move(m_menu),
             std::make_unique<cli::FileHistoryStorage>(".cli"));
     m_scheduler = new cli::LoopScheduler();

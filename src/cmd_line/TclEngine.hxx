@@ -24,7 +24,7 @@ class CMD::TclEngine
     public:
         TclEngine();
     
-    private:
+    // private:
         void initCommands();
 
     public:
