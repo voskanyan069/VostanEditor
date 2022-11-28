@@ -1,0 +1,38 @@
+#!/usr/bin/python3
+import shutil
+
+
+CMD_NAME = input("Please enter name for tcl command: ")
+CLASS_NAME = input("Please enter class name for tcl command: ")
+VOSTAN_PATH = input("Please enter the path to vostan-editor: ")
+DESCRIPTION = input("Please enter description for the command: ")
+
+def create_command(cmd, className, path, ext, description):
+    file_path = f"{VOSTAN_PATH}/src/commands/{className}.{ext}"
+    try:
+        shutil.copyfile(f"CommandBase.{ext}", file_path)
+    except Exception as e:
+        return
+    with open(file_path, 'r') as f:
+      my_file = f.read()
+    new_data = my_file.replace('CommandName', className)
+    new_data = new_data.replace('cmd_name', cmd)
+    new_data = new_data.replace('COMMAND_NAME', cmd.upper())
+    new_data = new_data.replace('CommandDescription', description)
+    with open(file_path, 'w') as file:
+      file.write(new_data)
+
+def init_command():
+    with open("src/commands/CommandIndex.cxx", "r") as index_file:
+        my_file = index_file.read()
+
+    new_data = my_file.replace("// New Command", f"\tregisterCommand(new {CLASS_NAME}())\n// New Command")
+    new_data = new_data.replace("// New Include", f'#include "commands/{CLASS_NAME}.hxx"\n// New Include')
+    with open("src/commands/CommandIndex.cxx", 'w') as index_file:
+        index_file.write(new_data)
+
+if __name__ == "__main__":
+    create_command(CMD_NAME, CLASS_NAME, VOSTAN_PATH, "hxx", DESCRIPTION)
+    create_command(CMD_NAME, CLASS_NAME, VOSTAN_PATH, "cxx", DESCRIPTION)
+
+    init_command()
