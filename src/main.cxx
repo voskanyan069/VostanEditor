@@ -8,6 +8,9 @@
 #include <iostream>
 #include <fstream>
 
+#include <QWidget>
+#include <QApplication>
+
 Remote::MetaxRequests* pMetax = nullptr;
 IO::Messaging* pMsg = IO::Messaging::GetInstance();
 std::ostream* pLogFile = nullptr;
@@ -15,7 +18,6 @@ Strings vecTempNodes;
 
 void initMessaging()
 {
-    IO::Messaging* pMsg = IO::Messaging::GetInstance();
     pLogFile = new std::ofstream("editor.log", std::ios_base::app);
     pMsg->RegisterStream(&std::cout);
     pMsg->RegisterStream(pLogFile);
@@ -23,7 +25,7 @@ void initMessaging()
 
 void cleanMessaging()
 {
-    DELETE_PTR(pLogFile);
+    DELETE_PTR( pLogFile );
 }
 
 std::string createNode()
@@ -84,14 +86,6 @@ void addChildNode( const std::string& sUUID )
     {
         std::exit(-1);
     }
-
-    std::string i;
-    std::cout << "Enter to delete " << sChildUUID << " child...";
-    std::getline(std::cin, i);
-    if ( !pMetax->DeleteChildNode(sUUID, sChildUUID, true) )
-    {
-        std::exit(-1);
-    }
 }
 
 void addChildNodes( const std::string& sUUID, int iCount )
@@ -136,14 +130,6 @@ void connectChildNode( const std::string& sUUID )
     {
         std::exit(-1);
     }
-
-    std::string i;
-    std::cout << "Enter to disconnect " << sChildUUID << " child...";
-    std::getline(std::cin, i);
-    if ( !pMetax->DisconnectChildNode(sUUID, sChildUUID) )
-    {
-        std::exit(-1);
-    }
 }
 
 void connectChildNodes( const std::string& sUUID, int iCount )
@@ -171,6 +157,22 @@ void connectChildNodes( const std::string& sUUID, int iCount )
     {
         std::exit(-1);
     }
+}
+
+void updateChildNode( const std::string& sUUID )
+{
+    std::string sChildUUID = createNode();
+    vecTempNodes.push_back(sChildUUID);
+    pMetax->AddChildNode(sUUID, sChildUUID);
+    pMetax->SetChildLeafCount(sUUID, sChildUUID, 5);
+    pMetax->SetChildDimensions(sUUID, sChildUUID, {1, 1, 1, 1, 1});
+    pMetax->SetChildDimensions(sUUID, sChildUUID, {1, 1, 1, 1, 1});
+    pMetax->SetChildTitleDimensions(sUUID, sChildUUID, {1, 10, 10, 10, 10});
+    pMetax->SetChildTextDimensions(sUUID, sChildUUID, {1, 20, 20, 20, 20});
+    pMetax->SetChildImageDimensions(sUUID, sChildUUID, {0, 30, 30, 30, 30});
+    pMetax->SetChildTitleVisibility(sUUID, sChildUUID, 0);
+    pMetax->SetChildTextVisibility(sUUID, sChildUUID, 1);
+    pMetax->SetChildImageVisibility(sUUID, sChildUUID, 1);
 }
 
 void deleteNode( const std::string& sUUID )
@@ -210,7 +212,25 @@ void start_cli(CMD::TclEngine* tcl_engine)
     cmd_mgr->start();
 }
 
-int main(int argc, char** argv)
+int testRequests(int argc, char** argv)
+{
+    pMetax = new Remote::MetaxRequests("localhost", 8001);
+    std::string sUUID = createNode();
+    updateNode(sUUID);
+    addChildNode(sUUID);
+    addChildNodes(sUUID, 5);
+    updateChildNode(sUUID);
+    connectChildNode(sUUID);
+    connectChildNodes(sUUID, 5);
+    std::string i;
+    std::cout << "\n\n\nURL: http://localhost:8001/db/get?id=" << sUUID;
+    std::cout << "\nEnter to exit...";
+    std::getline(std::cin, i);
+    deleteNodes();
+    return 0;
+}
+
+int testCli(int argc, char** argv)
 {
     initMessaging();
     for (int ai = 1; ai < argc && strcmp(argv[ai], "--"); ai++)
@@ -220,9 +240,45 @@ int main(int argc, char** argv)
                 CMD::TclEngine* tcl_engine = new CMD::TclEngine(); 
                 start_cli(tcl_engine);
             } else {
-                std::cout << "\nWrong paramters: " << argv[ai] << std::endl;
+                std::cout << "\nWrong paramters: "
+                    << argv[ai] << std::endl;
             }
         }
     }
     return 0;
+}
+
+int testGui(int argc, char** argv)
+{
+    QApplication app(argc, argv);
+    QWidget window;
+    window.resize(250, 150);
+    window.setWindowTitle("Simple example");
+    window.show();
+    return app.exec();
+}
+
+int main(int argc, char** argv)
+{
+    if ( argc < 2 )
+    {
+        std::cout << "Error: expected 1 argument provided 0" << std::endl;
+        return 1;
+    }
+    initMessaging();
+    int rc = 0;
+    if ( strcmp("-test", argv[1]) == 0 )
+    {
+        rc = testRequests(argc, argv);
+    }
+    else if ( strcmp("-cli", argv[1]) == 0 )
+    {
+        rc = testCli(argc, argv);
+    }
+    else if ( strcmp("-gui", argv[1]) == 0 )
+    {
+        rc = testGui(argc, argv);
+    }
+    cleanMessaging();
+    return rc;
 }

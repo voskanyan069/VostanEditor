@@ -84,16 +84,22 @@ public:
 
     /// Public API for interaction with child nodes content
 public:
-    /* TODO
-    bool SetChildDimensions( const std::string& sUUID, ... );
-    bool SetChildLeafCount( const std::string& sUUID, ... );
-    bool SetChildTitleVisibility( const std::string& sUUID, ... );
-    bool SetChildTextVisibility( const std::string& sUUID, ... );
-    bool SetChildImageVisibility( const std::string& sUUID, ... );
-    bool SetChildTitleDimensions( const std::string& sUUID, ... );
-    bool SetChildTextDimensions( const std::string& sUUID, ... );
-    bool SetChildImageDimensions( const std::string& sUUID, ... );
-    */
+    bool SetChildDimensions( const std::string& sParentUUID,
+            const std::string& sChildUUID, const Dimensions_t& tDim );
+    bool SetChildLeafCount( const std::string& sParentUUID,
+            const std::string& sChildUUID, int iLeafCnt );
+    bool SetChildTitleVisibility( const std::string& sParentUUID,
+            const std::string& sChildUUID, bool bValue );
+    bool SetChildTextVisibility( const std::string& sParentUUID,
+            const std::string& sChildUUID, bool bValue );
+    bool SetChildImageVisibility( const std::string& sParentUUID,
+            const std::string& sChildUUID, bool bValue );
+    bool SetChildTitleDimensions( const std::string& sParentUUID,
+            const std::string& sChildUUID, const Dimensions_t& tDim );
+    bool SetChildTextDimensions( const std::string& sParentUUID,
+            const std::string& sChildUUID, const Dimensions_t& tDim );
+    bool SetChildImageDimensions( const std::string& sParentUUID,
+            const std::string& sChildUUID, const Dimensions_t& tDim );
 
     /// Helper member functions
 private:
@@ -115,6 +121,12 @@ private:
             bool bValue, const UpdateContentFunc& fCallback );
     bool changeDimensions( const std::string& sUUID, const std::string& sKey,
             const Dimensions_t& tDim, const UpdateContentFunc& fCallback );
+    bool updateChildNodeVisibility( const std::string& sParentUUID,
+            const std::string& sChildUUID, const std::string& sKey,
+            bool bValue );
+    bool updateChildNodeDimensions( const std::string& sParentUUID,
+            const std::string& sChildUUID, const std::string& sKey,
+            const Dimensions_t& tDim );
 
     /// Helper members
 private:

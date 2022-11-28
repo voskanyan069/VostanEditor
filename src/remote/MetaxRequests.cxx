@@ -148,7 +148,6 @@ bool Remote::MetaxRequests::changeDimensions( const std::string& sUUID,
     return fCallback(sUUID, oData[sKey]["value"], tDim);
 }
 
-
 void Remote::MetaxRequests::updateNodeContent( const nlohmann::json& oData,
         const std::string& sKey, const std::string& sValue,
         const Dimensions_t& tDim, nlohmann::json& oUpdNode )
@@ -158,6 +157,38 @@ void Remote::MetaxRequests::updateNodeContent( const nlohmann::json& oData,
     restoreDimIfNeeded(tDim, tPrevDim, tNewDim);
     oUpdNode["view"] = DIM2STR(tNewDim);
     oUpdNode["value"] = sValue;
+}
+
+bool Remote::MetaxRequests::updateChildNodeVisibility(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        const std::string& sKey, bool bValue )
+{
+    Dimensions_t tDim = RESTORE_DIM;
+    tDim.show = bValue;
+    return updateChildNodeDimensions(sParentUUID, sChildUUID, sKey, tDim);
+}
+
+bool Remote::MetaxRequests::updateChildNodeDimensions(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        const std::string& sKey, const Dimensions_t& tDim )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    int iChildIdx = findNodeByUUID(oLayoutNode, sChildUUID);
+    if ( -1 == iChildIdx )
+    {
+        return false;
+    }
+    Dimensions_t tNewDim = tDim;
+    Dimensions_t tPrevDim = getPreviousDim(oLayoutNode[iChildIdx][sKey]);
+    restoreDimIfNeeded(tDim, tPrevDim, tNewDim);
+    oLayoutNode[iChildIdx][sKey]["view"] = DIM2STR(tNewDim);
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
 }
 
 std::string Remote::MetaxRequests::GetHostname()
@@ -481,6 +512,86 @@ bool Remote::MetaxRequests::ConnectChildNode( const std::string& sParentUUID,
         addChildToOut(oOutNode, sChildUUID);
     }
     return UpdateNode(sParentUUID, "out", oOutNode);
+}
+
+bool Remote::MetaxRequests::SetChildDimensions( const std::string& sParentUUID,
+        const std::string& sChildUUID, const Dimensions_t& tDim )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    int iChildIdx = findNodeByUUID(oLayoutNode, sChildUUID);
+    if ( -1 == iChildIdx )
+    {
+        return false;
+    }
+    oLayoutNode[iChildIdx]["view"] = DIM2STR(tDim);
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
+}
+
+bool Remote::MetaxRequests::SetChildLeafCount( const std::string& sParentUUID,
+        const std::string& sChildUUID, int iLeafCnt )
+{
+    std::string sParentResponse;
+    if ( !GetNode(sParentUUID, sParentResponse) )
+    {
+        return false;
+    }
+    nlohmann::json oParentNode = nlohmann::json::parse(sParentResponse);
+    nlohmann::json oLayoutNode = oParentNode["layout"];
+    int iChildIdx = findNodeByUUID(oLayoutNode, sChildUUID);
+    if ( -1 == iChildIdx )
+    {
+        return false;
+    }
+    oLayoutNode[iChildIdx]["leaf"] = iLeafCnt;
+    return UpdateNode(sParentUUID, "layout", oLayoutNode);
+}
+
+bool Remote::MetaxRequests::SetChildTitleVisibility(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        bool bValue )
+{
+    return updateChildNodeVisibility(sParentUUID, sChildUUID, "title", bValue);
+}
+
+bool Remote::MetaxRequests::SetChildTextVisibility(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        bool bValue )
+{
+    return updateChildNodeVisibility(sParentUUID, sChildUUID, "txt", bValue);
+}
+
+bool Remote::MetaxRequests::SetChildImageVisibility(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        bool bValue )
+{
+    return updateChildNodeVisibility(sParentUUID, sChildUUID, "img", bValue);
+}
+
+bool Remote::MetaxRequests::SetChildTitleDimensions(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        const Dimensions_t& tDim )
+{
+    return updateChildNodeDimensions(sParentUUID, sChildUUID, "title", tDim);
+}
+
+bool Remote::MetaxRequests::SetChildTextDimensions(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        const Dimensions_t& tDim )
+{
+    return updateChildNodeDimensions(sParentUUID, sChildUUID, "txt", tDim);
+}
+
+bool Remote::MetaxRequests::SetChildImageDimensions(
+        const std::string& sParentUUID, const std::string& sChildUUID,
+        const Dimensions_t& tDim )
+{
+    return updateChildNodeDimensions(sParentUUID, sChildUUID, "img", tDim);
 }
 
 bool Remote::MetaxRequests::DisconnectChildNode( const std::string& sParentUUID,

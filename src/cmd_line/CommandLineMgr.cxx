@@ -70,7 +70,7 @@ Menu(CMD::TclEngine* tcl_engine) :
     m_scheduler(nullptr),
     m_tcl_engine(tcl_engine)
 {
-    cli::SetColor();
+    cli::SetNoColor();
     m_menu = std::make_unique<cli::Menu>("VostanEditor");
     initCommands();
     m_cli = new cli::Cli( std::move(m_menu),
