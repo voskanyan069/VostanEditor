@@ -23,12 +23,13 @@ def create_command(cmd, className, path, ext, description):
       file.write(new_data)
 
 def init_command():
-    with open("src/commands/CommandIndex.cxx", "r") as index_file:
+    path = f"{VOSTAN_PATH}/src/commands/CommandIndex.cxx"
+    with open(path, "r") as index_file:
         my_file = index_file.read()
 
-    new_data = my_file.replace("// New Command", f"\tregisterCommand(new {CLASS_NAME}())\n// New Command")
+    new_data = my_file.replace("// New Command", f"\tregisterCommand(new {CLASS_NAME}());\n// New Command")
     new_data = new_data.replace("// New Include", f'#include "commands/{CLASS_NAME}.hxx"\n// New Include')
-    with open("src/commands/CommandIndex.cxx", 'w') as index_file:
+    with open(path, 'w') as index_file:
         index_file.write(new_data)
 
 if __name__ == "__main__":
