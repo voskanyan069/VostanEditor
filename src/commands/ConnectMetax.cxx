@@ -13,7 +13,7 @@ ConnectMetax()
 std::string commands::ConnectMetax::
 getName()
 {
-    return "connect";
+    return "metax::connect";
 }
 
 std::string commands::ConnectMetax::

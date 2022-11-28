@@ -14,7 +14,7 @@ CreateNode()
 std::string commands::CreateNode::
 getName()
 {
-    return "create_node";
+    return "node::create";
 }
 
 std::string commands::CreateNode::
