@@ -7,9 +7,12 @@
 #include <map>
 #include <vector>
 #include <iostream>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/type_index.hpp>
+
 #include "utils/VostanException.hxx"
+#include "remote/MetaxRequests.hxx"
 
 namespace commands {
     class CommandBase;
@@ -74,6 +77,9 @@ class commands::CommandBase
     
     public:
         void evalCommand(const std::string&);
+
+    protected:
+        static Remote::MetaxRequests* m_pMetax;
 
     private:
         PARAMETERS m_parameters;

@@ -212,6 +212,7 @@ void start_cli(CMD::TclEngine* tcl_engine)
 
 int main(int argc, char** argv)
 {
+    initMessaging();
     for (int ai = 1; ai < argc && strcmp(argv[ai], "--"); ai++)
     {
         if (argv[ai][0] == '-') {

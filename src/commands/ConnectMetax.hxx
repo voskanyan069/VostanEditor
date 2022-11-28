@@ -1,14 +1,14 @@
-#ifndef __CMDS_COMMAND_TEST_HXX__
-#define __CMDS_COMMAND_TEST_HXX__
+#ifndef __CMDS_CONNECT_HXX__
+#define __CMDS_CONNECT_HXX__
 
 // Headers from this project
 #include "commands/CommandBase.hxx"
 
 namespace commands {
-    class CommandTest;
+    class ConnectMetax;
 }
 
-class commands::CommandTest : public commands::CommandBase
+class commands::ConnectMetax : public commands::CommandBase
 {
     public:
         virtual std::string getName();
@@ -16,8 +16,8 @@ class commands::CommandTest : public commands::CommandBase
         virtual std::string run();
 
     public:
-        CommandTest();
-        ~CommandTest();
+        ConnectMetax();
+        ~ConnectMetax();
 };
 
-#endif // __CMDS_COMMAND_TEST_HXX__
+#endif // __CMDS_CONNECT_HXX__

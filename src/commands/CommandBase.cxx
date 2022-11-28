@@ -1,5 +1,7 @@
 #include "commands/CommandBase.hxx"
 
+Remote::MetaxRequests* commands::CommandBase::m_pMetax = nullptr;
+
 bool commands::CommandBase::
 paramExists(const std::string& name)
 {
